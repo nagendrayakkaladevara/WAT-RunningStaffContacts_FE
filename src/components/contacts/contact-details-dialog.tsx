@@ -48,7 +48,7 @@ export function ContactDetailsDialog({
   const updated = contact.updatedAt ? new Date(contact.updatedAt) : null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="mobile-sheet max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="mobile-sheet max-h-[90dvh] overflow-y-auto sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="text-2xl leading-tight">
             {contact.name}
@@ -58,11 +58,9 @@ export function ContactDetailsDialog({
               "Contact details"}
           </DialogDescription>
         </DialogHeader>
-        <div className="rounded-2xl bg-primary/5 p-4">
-          <p className="text-xs font-medium text-muted-foreground">
-            PHONE NUMBER
-          </p>
-          <p className="mt-1 break-all text-2xl font-semibold tracking-tight">
+        <div className="rounded-xl bg-card p-5">
+          <p className="section-label">PHONE NUMBER</p>
+          <p className="mt-1 break-all text-2xl font-medium tracking-tight">
             {contact.phone || "Not available"}
           </p>
           <div className="mt-4">

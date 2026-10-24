@@ -29,7 +29,7 @@ export function ContactActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button
-        variant="outline"
+        variant="ghost"
         size="icon"
         className="size-11"
         aria-label={`Copy ${contactName}'s number`}
@@ -37,7 +37,7 @@ export function ContactActions({
       >
         <Copy className="size-4" />
       </Button>
-      <Button asChild className="h-11 px-4">
+      <Button asChild variant="secondary" className="h-11 px-4">
         <a href={`tel:${number}`} aria-label={`Call ${contactName}`}>
           <Phone className="size-4" />
           Call

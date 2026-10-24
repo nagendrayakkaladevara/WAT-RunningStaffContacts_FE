@@ -23,16 +23,14 @@ export function More() {
     }
   }
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          More from WAT Contacts
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h1 className="page-heading">More from WAT Contacts</h1>
+        <p className="page-description">
           Documents, insights and app information.
         </p>
       </div>
-      <div className="overflow-hidden rounded-2xl border bg-card">
+      <div className="overflow-hidden rounded-xl border bg-card">
         {[
           { to: "/documents", label: "Important documents", icon: FileText },
           {
@@ -53,10 +51,10 @@ export function More() {
           </Link>
         ))}
       </div>
-      <section className="rounded-2xl border bg-card p-5">
+      <section className="rounded-xl border bg-card p-5">
         <Download className="mb-3 size-6 text-primary" />
         <h2 className="font-semibold">Keep the directory close</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="page-description">
           Add WAT Contacts to your home screen using your browser menu. On
           iPhone, use Share → Add to Home Screen.
         </p>

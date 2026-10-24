@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 import {
   Contact,
   Eye,
@@ -10,8 +10,8 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-} from "lucide-react"
-import { analyticsService } from "@/services/analytics.service"
+} from "lucide-react";
+import { analyticsService } from "@/services/analytics.service";
 import type {
   AnalyticsOverview,
   BloodGroupDistribution,
@@ -20,19 +20,28 @@ import type {
   GrowthData,
   RecentContacts,
   VisitHistory,
-} from "@/types/analytics"
-import { VisitsHistoryChart } from "@/components/analytics/visits-history-chart"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
-import { formatPhoneNumber } from "@/lib/phone-formatter"
+} from "@/types/analytics";
+import { VisitsHistoryChart } from "@/components/analytics/visits-history-chart";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/phone-formatter";
 
 export function Analytics() {
-  const [overview, setOverview] = React.useState<AnalyticsOverview | null>(null)
-  const [bloodGroupDist, setBloodGroupDist] = React.useState<BloodGroupDistribution | null>(null)
-  const [lobbyDist, setLobbyDist] = React.useState<LobbyDistribution | null>(null)
-  const [designationDist, setDesignationDist] = React.useState<DesignationDistribution | null>(null)
-  const [growthData, setGrowthData] = React.useState<GrowthData | null>(null)
-  const [recentContacts, setRecentContacts] = React.useState<RecentContacts | null>(null)
+  const [overview, setOverview] = React.useState<AnalyticsOverview | null>(
+    null,
+  );
+  const [bloodGroupDist, setBloodGroupDist] =
+    React.useState<BloodGroupDistribution | null>(null);
+  const [lobbyDist, setLobbyDist] = React.useState<LobbyDistribution | null>(
+    null,
+  );
+  const [designationDist, setDesignationDist] =
+    React.useState<DesignationDistribution | null>(null);
+  const [growthData, setGrowthData] = React.useState<GrowthData | null>(null);
+  const [recentContacts, setRecentContacts] =
+    React.useState<RecentContacts | null>(null);
   // Test data for visits history chart (commented out - testing completed)
   /*
   const testVisitsHistory: VisitHistory = {
@@ -50,24 +59,34 @@ export function Analytics() {
   }
   */
 
-  const [visitsHistory, setVisitsHistory] = React.useState<VisitHistory | null>(null)
-  const [loading, setLoading] = React.useState(true)
-  const [visitsLoading, setVisitsLoading] = React.useState(false)
-  const [growthLoading, setGrowthLoading] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-  const [growthDays, setGrowthDays] = React.useState(7)
-  const [visitsDays, setVisitsDays] = React.useState(7)
+  const [visitsHistory, setVisitsHistory] = React.useState<VisitHistory | null>(
+    null,
+  );
+  const [loading, setLoading] = React.useState(true);
+  const [visitsLoading, setVisitsLoading] = React.useState(false);
+  const [growthLoading, setGrowthLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [growthDays, setGrowthDays] = React.useState(7);
+  const [visitsDays, setVisitsDays] = React.useState(7);
 
-  const initialPeriods = React.useRef({ growthDays, visitsDays })
+  const initialPeriods = React.useRef({ growthDays, visitsDays });
 
   // Initial overview; subsequent period changes refresh only the selected chart.
   React.useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        setLoading(true)
-        setError(null)
+        setLoading(true);
+        setError(null);
 
-        const [overviewData, bgData, lobbyData, desData, growth, recent, visits] = await Promise.all([
+        const [
+          overviewData,
+          bgData,
+          lobbyData,
+          desData,
+          growth,
+          recent,
+          visits,
+        ] = await Promise.all([
           analyticsService.getOverview(),
           analyticsService.getBloodGroupDistribution(),
           analyticsService.getLobbyDistribution(),
@@ -75,90 +94,94 @@ export function Analytics() {
           analyticsService.getGrowth(initialPeriods.current.growthDays),
           analyticsService.getRecentContacts(10),
           analyticsService.getVisitsHistory(initialPeriods.current.visitsDays),
-        ])
+        ]);
 
-        setOverview(overviewData)
-        setBloodGroupDist(bgData)
-        setLobbyDist(lobbyData)
-        setDesignationDist(desData)
-        setGrowthData(growth)
-        setRecentContacts(recent)
-        setVisitsHistory(visits)
+        setOverview(overviewData);
+        setBloodGroupDist(bgData);
+        setLobbyDist(lobbyData);
+        setDesignationDist(desData);
+        setGrowthData(growth);
+        setRecentContacts(recent);
+        setVisitsHistory(visits);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch analytics")
-        console.error("Error fetching analytics:", err)
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch analytics",
+        );
+        console.error("Error fetching analytics:", err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchAnalytics()
-  }, [])
+    fetchAnalytics();
+  }, []);
 
   // Separate effect for growth data when growthDays changes (after initial load)
-  const isInitialMountGrowth = React.useRef(true)
+  const isInitialMountGrowth = React.useRef(true);
   React.useEffect(() => {
     const fetchGrowthData = async () => {
       try {
-        setGrowthLoading(true)
-        const growth = await analyticsService.getGrowth(growthDays)
-        setGrowthData(growth)
+        setGrowthLoading(true);
+        const growth = await analyticsService.getGrowth(growthDays);
+        setGrowthData(growth);
       } catch (err) {
-        console.error("Error fetching growth data:", err)
+        console.error("Error fetching growth data:", err);
       } finally {
-        setGrowthLoading(false)
+        setGrowthLoading(false);
       }
-    }
+    };
 
     // Skip on initial mount (growth data is already fetched in initial load)
     if (isInitialMountGrowth.current) {
-      isInitialMountGrowth.current = false
-      return
+      isInitialMountGrowth.current = false;
+      return;
     }
 
-    fetchGrowthData()
-  }, [growthDays])
+    fetchGrowthData();
+  }, [growthDays]);
 
   // Separate effect for visits history when visitsDays changes (after initial load)
-  const isInitialMountVisits = React.useRef(true)
+  const isInitialMountVisits = React.useRef(true);
   React.useEffect(() => {
     const fetchVisitsHistory = async () => {
       try {
-        setVisitsLoading(true)
-        const visits = await analyticsService.getVisitsHistory(visitsDays)
-        setVisitsHistory(visits)
+        setVisitsLoading(true);
+        const visits = await analyticsService.getVisitsHistory(visitsDays);
+        setVisitsHistory(visits);
       } catch (err) {
-        console.error("Error fetching visits history:", err)
+        console.error("Error fetching visits history:", err);
       } finally {
-        setVisitsLoading(false)
+        setVisitsLoading(false);
       }
-    }
+    };
 
     // Skip on initial mount (visits history is already fetched in initial load)
     if (isInitialMountVisits.current) {
-      isInitialMountVisits.current = false
-      return
+      isInitialMountVisits.current = false;
+      return;
     }
 
-    fetchVisitsHistory()
-  }, [visitsDays])
+    fetchVisitsHistory();
+  }, [visitsDays]);
 
   const handleGrowthDaysChange = (days: number) => {
-    setGrowthDays(days)
+    setGrowthDays(days);
     // Loading state is handled by the useEffect
-  }
+  };
 
   const handleVisitsDaysChange = (days: number) => {
-    setVisitsDays(days)
+    setVisitsDays(days);
     // Loading state is handled by the useEffect
-  }
+  };
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground">View statistics and insights about your contacts.</p>
+          <h1 className="page-heading">Analytics</h1>
+          <p className="text-muted-foreground">
+            View statistics and insights about your contacts.
+          </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
@@ -166,30 +189,32 @@ export function Analytics() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground">View statistics and insights about your contacts.</p>
+          <h1 className="page-heading">Analytics</h1>
+          <p className="text-muted-foreground">
+            View statistics and insights about your contacts.
+          </p>
         </div>
         <div className="rounded-lg border border-destructive bg-destructive/10 p-6 text-center">
           <p className="text-sm font-medium text-destructive">{error}</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-10">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
+        <h1 className="page-heading">Directory insights</h1>
         <p className="text-muted-foreground">
-          Comprehensive insights and statistics about your contacts.
+          A closer look at the directory and how it is used.
         </p>
       </div>
 
@@ -200,25 +225,21 @@ export function Analytics() {
             title="Total Contacts"
             value={overview.totalContacts}
             icon={Contact}
-            color="blue"
           />
           <StatCard
             title="Total Visits"
             value={overview.visitCount}
             icon={Eye}
-            color="purple"
           />
           <StatCard
             title="Contacts added in past 7 Days"
             value={overview.recentContacts7Days}
             icon={Calendar}
-            color="green"
           />
           <StatCard
             title="Contacts added in past 30 Days"
             value={overview.recentContacts30Days}
             icon={TrendingUp}
-            color="orange"
           />
         </div>
       )}
@@ -233,7 +254,6 @@ export function Analytics() {
             percentage={parseFloat(overview.bloodGroupCoverage)}
             missing={overview.contactsWithoutBloodGroup}
             icon={HeartPulse}
-            color="red"
           />
           <CoverageCard
             title="Lobby Coverage"
@@ -242,7 +262,6 @@ export function Analytics() {
             percentage={parseFloat(overview.lobbyCoverage)}
             missing={overview.contactsWithoutLobby}
             icon={Briefcase}
-            color="blue"
           />
         </div>
       )}
@@ -256,7 +275,6 @@ export function Analytics() {
             total={bloodGroupDist.total}
             getLabel={(item) => item.bloodGroup || ""}
             icon={HeartPulse}
-            color="red"
           />
         )}
 
@@ -267,7 +285,6 @@ export function Analytics() {
             total={lobbyDist.total}
             getLabel={(item) => item.lobby || ""}
             icon={Briefcase}
-            color="blue"
           />
         )}
       </div>
@@ -280,7 +297,6 @@ export function Analytics() {
           total={designationDist.total}
           getLabel={(item) => item.designation || ""}
           icon={Building2}
-          color="purple"
         />
       )}
 
@@ -304,48 +320,40 @@ export function Analytics() {
         {recentContacts && <RecentContactsCard data={recentContacts} />}
       </div>
     </div>
-  )
+  );
 }
 
 interface StatCardProps {
-  title: string
-  value: number
-  icon: React.ComponentType<{ className?: string }>
-  color: "blue" | "purple" | "green" | "orange" | "red"
+  title: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
-function StatCard({ title, value, icon: Icon, color }: StatCardProps) {
-  const colorClasses = {
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    purple: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-    green: "bg-green-500/10 text-green-600 dark:text-green-400",
-    orange: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-    red: "bg-red-500/10 text-red-600 dark:text-red-400",
-  }
-
+function StatCard({ title, value, icon: Icon }: StatCardProps) {
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm">
+    <Card className="gap-0 p-6">
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-3xl font-bold">{value.toLocaleString()}</p>
+          <p className="text-3xl font-medium tabular-nums">
+            {value.toLocaleString()}
+          </p>
         </div>
-        <div className={cn("rounded-full p-3", colorClasses[color])}>
+        <div className="rounded-full bg-muted p-3 text-muted-foreground">
           <Icon className="h-6 w-6" />
         </div>
       </div>
-    </div>
-  )
+    </Card>
+  );
 }
 
 interface CoverageCardProps {
-  title: string
-  covered: number
-  total: number
-  percentage: number
-  missing: number
-  icon: React.ComponentType<{ className?: string }>
-  color: "red" | "blue"
+  title: string;
+  covered: number;
+  total: number;
+  percentage: number;
+  missing: number;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 function CoverageCard({
@@ -354,33 +362,19 @@ function CoverageCard({
   percentage,
   missing,
   icon: Icon,
-  color,
 }: CoverageCardProps) {
-  const colorClasses = {
-    red: {
-      bg: "bg-red-500",
-      text: "text-red-600 dark:text-red-400",
-      iconBg: "bg-red-500/10",
-    },
-    blue: {
-      bg: "bg-blue-500",
-      text: "text-blue-600 dark:text-blue-400",
-      iconBg: "bg-blue-500/10",
-    },
-  }
-
-  const colors = colorClasses[color]
-
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm">
+    <Card className="gap-0 p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={cn("rounded-full p-2", colors.iconBg)}>
-            <Icon className={cn("h-5 w-5", colors.text)} />
+          <div className="rounded-full bg-muted p-2">
+            <Icon className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
             <h3 className="font-semibold">{title}</h3>
-            <p className="text-sm text-muted-foreground">{percentage.toFixed(2)}% coverage</p>
+            <p className="text-sm text-muted-foreground">
+              {percentage.toFixed(2)}% coverage
+            </p>
           </div>
         </div>
       </div>
@@ -396,7 +390,7 @@ function CoverageCard({
 
         <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className={cn("h-full transition-all duration-500", colors.bg)}
+            className="h-full bg-primary transition-[width] duration-300"
             style={{ width: `${percentage}%` }}
           />
         </div>
@@ -409,50 +403,45 @@ function CoverageCard({
           <span className="font-medium text-muted-foreground">{missing}</span>
         </div>
       </div>
-    </div>
-  )
+    </Card>
+  );
 }
 
 interface DistributionChartProps {
-  title: string
-  data: Array<{ count: number; percentage: string; bloodGroup?: string; lobby?: string; designation?: string }>
-  total: number
-  getLabel: (item: { count: number; percentage: string; bloodGroup?: string; lobby?: string; designation?: string }) => string
-  icon: React.ComponentType<{ className?: string }>
-  color: "red" | "blue" | "purple"
+  title: string;
+  data: Array<{
+    count: number;
+    percentage: string;
+    bloodGroup?: string;
+    lobby?: string;
+    designation?: string;
+  }>;
+  total: number;
+  getLabel: (item: {
+    count: number;
+    percentage: string;
+    bloodGroup?: string;
+    lobby?: string;
+    designation?: string;
+  }) => string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
-function DistributionChart({ title, data, total, getLabel, icon: Icon, color }: DistributionChartProps) {
-  const colorClasses = {
-    red: {
-      bg: "bg-red-500",
-      text: "text-red-600 dark:text-red-400",
-      iconBg: "bg-red-500/10",
-      bar: "bg-red-500",
-    },
-    blue: {
-      bg: "bg-blue-500",
-      text: "text-blue-600 dark:text-blue-400",
-      iconBg: "bg-blue-500/10",
-      bar: "bg-blue-500",
-    },
-    purple: {
-      bg: "bg-purple-500",
-      text: "text-purple-600 dark:text-purple-400",
-      iconBg: "bg-purple-500/10",
-      bar: "bg-purple-500",
-    },
-  }
-
-  const colors = colorClasses[color]
-  const maxCount = Math.max(...data.map((item) => item.count), 1)
+function DistributionChart({
+  title,
+  data,
+  total,
+  getLabel,
+  icon: Icon,
+}: DistributionChartProps) {
+  const maxCount = Math.max(...data.map((item) => item.count), 1);
 
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm">
+    <Card className="gap-0 p-6">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={cn("rounded-full p-2", colors.iconBg)}>
-            <Icon className={cn("h-5 w-5", colors.text)} />
+          <div className="rounded-full bg-muted p-2">
+            <Icon className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
             <h3 className="font-semibold">{title}</h3>
@@ -463,9 +452,9 @@ function DistributionChart({ title, data, total, getLabel, icon: Icon, color }: 
 
       <div className="space-y-4">
         {data.map((item, index) => {
-          const label = getLabel(item)
-          const percentage = parseFloat(item.percentage)
-          const width = (item.count / maxCount) * 100
+          const label = getLabel(item);
+          const percentage = parseFloat(item.percentage);
+          const width = (item.count / maxCount) * 100;
 
           return (
             <div key={index} className="space-y-2">
@@ -473,72 +462,87 @@ function DistributionChart({ title, data, total, getLabel, icon: Icon, color }: 
                 <span className="font-medium">{label}</span>
                 <div className="flex items-center gap-3">
                   <span className="text-muted-foreground">{item.count}</span>
-                  <span className="font-semibold">{percentage.toFixed(2)}%</span>
+                  <span className="font-semibold">
+                    {percentage.toFixed(2)}%
+                  </span>
                 </div>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className={cn("h-full transition-all duration-500", colors.bar)}
+                  className="h-full bg-primary transition-[width] duration-300"
                   style={{ width: `${width}%` }}
                 />
               </div>
             </div>
-          )
+          );
         })}
       </div>
-    </div>
-  )
+    </Card>
+  );
 }
 
 interface GrowthChartProps {
-  data: GrowthData | null
-  days: number
-  loading?: boolean
-  onDaysChange: (days: number) => void
+  data: GrowthData | null;
+  days: number;
+  loading?: boolean;
+  onDaysChange: (days: number) => void;
 }
 
-function GrowthChart({ data, days, loading = false, onDaysChange }: GrowthChartProps) {
-  const maxCumulative = data ? Math.max(...data.dailyGrowth.map((d) => d.cumulative), 1) : 1
-  const maxDaily = data ? Math.max(...data.dailyGrowth.map((d) => d.count), 1) : 1
+function GrowthChart({
+  data,
+  days,
+  loading = false,
+  onDaysChange,
+}: GrowthChartProps) {
+  const maxCumulative = data
+    ? Math.max(...data.dailyGrowth.map((d) => d.cumulative), 1)
+    : 1;
+  const maxDaily = data
+    ? Math.max(...data.dailyGrowth.map((d) => d.count), 1)
+    : 1;
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-  }
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
 
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm">
+    <Card className="gap-0 p-6">
       <div className="mb-6 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-green-500/10 p-2">
-            <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <div className="rounded-full bg-muted p-2">
+            <TrendingUp className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
             <h3 className="font-semibold">Contacts Growth</h3>
-            <p className="text-sm text-muted-foreground">{loading ? "Loading..." : data?.period || ""}</p>
+            <p className="text-sm text-muted-foreground">
+              {loading ? "Loading..." : data?.period || ""}
+            </p>
           </div>
         </div>
-        <div className="flex gap-2 justify-end">
+        <div className="flex flex-wrap gap-2 justify-end">
           {[7, 30, 90, 365].map((d) => (
-            <button
+            <Button
+              variant="ghost"
+              aria-pressed={days === d}
               key={d}
               onClick={() => onDaysChange(d)}
               className={cn(
                 "rounded-md px-3 py-1 text-xs font-medium transition-colors",
                 days === d
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80",
               )}
             >
               {d}d
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       <div className="mb-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <div className="h-3 w-3 rounded-full bg-green-500" />
+          <div className="h-3 w-3 rounded-full bg-primary" />
           <span className="text-sm text-muted-foreground">Total Added</span>
           <span className="text-sm font-semibold">
             {loading ? "..." : data?.totalAdded.toLocaleString() || "0"}
@@ -548,68 +552,74 @@ function GrowthChart({ data, days, loading = false, onDaysChange }: GrowthChartP
 
       {loading && !data ? (
         <div className="flex h-[200px] items-center justify-center">
-          <div className="text-sm text-muted-foreground">Loading chart data...</div>
+          <div className="text-sm text-muted-foreground">
+            Loading chart data...
+          </div>
         </div>
       ) : (
         <div className="space-y-2">
           {data?.dailyGrowth.slice(-14).map((day, index) => {
-          const cumulativeWidth = (day.cumulative / maxCumulative) * 100
-          const dailyWidth = maxDaily > 0 ? (day.count / maxDaily) * 100 : 0
+            const cumulativeWidth = (day.cumulative / maxCumulative) * 100;
+            const dailyWidth = maxDaily > 0 ? (day.count / maxDaily) * 100 : 0;
 
-          return (
-            <div key={index} className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{formatDate(day.date)}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-muted-foreground">+{day.count}</span>
-                  <span className="font-medium">{day.cumulative}</span>
+            return (
+              <div key={index} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {formatDate(day.date)}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-muted-foreground">+{day.count}</span>
+                    <span className="font-medium">{day.cumulative}</span>
+                  </div>
+                </div>
+                <div className="relative h-4 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="absolute left-0 top-0 h-full bg-primary/30 transition-all duration-300"
+                    style={{ width: `${cumulativeWidth}%` }}
+                  />
+                  <div
+                    className="absolute left-0 top-0 h-full bg-primary transition-all duration-300"
+                    style={{ width: `${dailyWidth}%` }}
+                  />
                 </div>
               </div>
-              <div className="relative h-4 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="absolute left-0 top-0 h-full bg-green-500/30 transition-all duration-300"
-                  style={{ width: `${cumulativeWidth}%` }}
-                />
-                <div
-                  className="absolute left-0 top-0 h-full bg-green-500 transition-all duration-300"
-                  style={{ width: `${dailyWidth}%` }}
-                />
-              </div>
-            </div>
-          )
-        }) || []}
+            );
+          }) || []}
         </div>
       )}
-    </div>
-  )
+    </Card>
+  );
 }
 
 interface RecentContactsCardProps {
-  data: RecentContacts
+  data: RecentContacts;
 }
 
 function RecentContactsCard({ data }: RecentContactsCardProps) {
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return "Today"
-    if (diffDays === 1) return "Yesterday"
-    if (diffDays < 7) return `${diffDays} days ago`
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-  }
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
 
   return (
-    <div className="rounded-lg border bg-card p-6 shadow-sm">
+    <Card className="gap-0 p-6">
       <div className="mb-6 flex items-center gap-3">
-        <div className="rounded-full bg-blue-500/10 p-2">
-          <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <div className="rounded-full bg-muted p-2">
+          <Clock className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
           <h3 className="font-semibold">Recent Contacts</h3>
-          <p className="text-sm text-muted-foreground">Last {data.count} added contacts</p>
+          <p className="text-sm text-muted-foreground">
+            Last {data.count} added contacts
+          </p>
         </div>
       </div>
 
@@ -660,6 +670,6 @@ function RecentContactsCard({ data }: RecentContactsCardProps) {
           ))
         )}
       </div>
-    </div>
-  )
+    </Card>
+  );
 }

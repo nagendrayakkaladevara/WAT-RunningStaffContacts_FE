@@ -13,6 +13,8 @@ import {
 import { contactsService } from "@/services/contacts.service";
 import { ContactsList } from "@/components/contacts/contacts-list";
 import { PaginationControls } from "@/components/contacts/pagination-controls";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -95,16 +97,17 @@ function FilterForm({
                     key={value}
                     className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm hover:bg-muted"
                   >
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-blue-600"
+                    <Checkbox
                       checked={draft[field].includes(value)}
-                      onChange={(event) =>
+                      onCheckedChange={(checked) =>
                         setDraft((previous) => ({
                           ...previous,
-                          [field]: event.target.checked
-                            ? [...previous[field], value]
-                            : previous[field].filter((item) => item !== value),
+                          [field]:
+                            checked === true
+                              ? [...previous[field], value]
+                              : previous[field].filter(
+                                  (item) => item !== value,
+                                ),
                         }))
                       }
                     />
@@ -240,12 +243,10 @@ export function Categories() {
   }
   if (!selected)
     return (
-      <div className="space-y-6">
+      <div className="page-stack">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Browse directory
-          </h1>
-          <p className="mt-2 text-muted-foreground">
+          <h1 className="page-heading">Browse directory</h1>
+          <p className="page-description">
             Choose a category to find the right contact.
           </p>
         </div>
@@ -254,20 +255,26 @@ export function Categories() {
             <Link
               key={id}
               to={`/categories?category=${id}`}
-              className="rounded-2xl border bg-card p-5 hover:border-primary/40"
+              className="rounded-xl"
             >
-              <Icon className="mb-5 size-6 text-primary" />
-              <h2 className="font-semibold">{name}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {description}
-              </p>
+              <Card className="directory-tile gap-0">
+                <Icon
+                  aria-hidden="true"
+                  strokeWidth={1.5}
+                  className="mb-7 size-5 text-muted-foreground"
+                />
+                <h2 className="font-semibold">{name}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {description}
+                </p>
+              </Card>
             </Link>
           ))}
         </div>
       </div>
     );
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <Link
         to="/categories"
         className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
@@ -277,9 +284,7 @@ export function Categories() {
       </Link>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {selected.name}
-          </h1>
+          <h1 className="page-heading">{selected.name}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {selected.description}
           </p>
@@ -310,7 +315,7 @@ export function Categories() {
           </Button>
         </div>
       )}
-      <details className="hidden rounded-2xl border bg-card p-4 md:block">
+      <details className="hidden rounded-xl border bg-card p-4 md:block">
         <summary className="cursor-pointer text-sm font-medium">
           Filter contacts{optionsLoading ? " — loading options…" : ""}
         </summary>

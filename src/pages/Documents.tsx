@@ -1,12 +1,10 @@
 import { DocumentsList } from "@/components/documents/documents-list";
 export function Documents() {
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Important documents
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h1 className="page-heading">Important documents</h1>
+        <p className="page-description">
           Find reference material and open the latest available links.
         </p>
       </div>

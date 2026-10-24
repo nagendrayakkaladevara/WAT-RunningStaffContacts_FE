@@ -3,7 +3,8 @@ import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 function initialTheme() {
   try {
-    return localStorage.getItem("theme") === "dark";
+    const saved = localStorage.getItem("theme");
+    return saved === "dark" || (saved !== "light" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches);
   } catch {
     return false;
   }
@@ -25,7 +26,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className="size-11"
+      className="size-11 rounded-full text-muted-foreground"
       aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
       onClick={toggle}
     >

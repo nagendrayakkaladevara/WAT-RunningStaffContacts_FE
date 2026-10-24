@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Mic, X } from "lucide-react";
+import { Search, Mic, X, LoaderCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +8,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import type { SearchMode } from "@/lib/contact-search";
 interface Recognition {
   lang: string;
@@ -99,10 +106,9 @@ export function ContactsSearch({
           event.preventDefault();
           onSubmit();
         }}
-        className="flex gap-2"
+        className="rounded-xl border border-[var(--border-hover)] bg-card p-3 sm:p-4"
       >
-        <div className="relative min-w-0 flex-1">
-          <Search className="absolute left-4 top-4 size-5 text-muted-foreground" />
+        <div className="relative min-w-0">
           <label htmlFor="contact-search" className="sr-only">
             Search contacts
           </label>
@@ -110,9 +116,9 @@ export function ContactsSearch({
             id="contact-search"
             value={query}
             onChange={(event) => onChange(event.target.value, mode)}
-            placeholder="Search by name or phone number"
+            placeholder="Search a name or phone"
             inputMode={mode === "phone" ? "tel" : "search"}
-            className="h-13 rounded-xl bg-card pl-11 pr-12 text-base shadow-sm"
+            className="h-14 border-0 bg-transparent px-2 pr-12 text-base shadow-none dark:bg-transparent"
             autoComplete="off"
           />
           {query && (
@@ -120,7 +126,7 @@ export function ContactsSearch({
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-1 top-1 size-11"
+              className="absolute bottom-1.5 right-1.5 size-11"
               aria-label="Clear search"
               onClick={() => onChange("", mode)}
             >
@@ -128,46 +134,58 @@ export function ContactsSearch({
             </Button>
           )}
         </div>
-        {Speech && (
-          <Button
-            type="button"
-            variant="outline"
-            className="size-13 rounded-xl"
-            aria-label="Search by voice"
-            onClick={listen}
-          >
-            <Mic />
-          </Button>
-        )}
-        <Button
-          type="submit"
-          className="h-13 rounded-xl px-4"
-          aria-label="Search now"
-        >
-          <Search className="size-5" />
-          <span className="hidden sm:inline">Search</span>
-        </Button>
-      </form>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <p role="status">
-          {loading ? "Searching…" : "Find your people. Get in touch."}
-        </p>
-        <label className="flex items-center gap-2">
-          Search in
-          <select
-            aria-label="Search mode"
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <Select
             value={mode}
-            onChange={(event) =>
-              onChange(query, event.target.value as SearchMode)
-            }
-            className="min-h-10 rounded-lg border bg-card px-2 text-foreground"
+            onValueChange={(value) => onChange(query, value as SearchMode)}
           >
-            <option value="auto">Auto detect</option>
-            <option value="name">Name</option>
-            <option value="phone">Phone</option>
-          </select>
-        </label>
-      </div>
+            <SelectTrigger
+              aria-label="Search mode"
+              className="min-h-11 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Auto detect</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="phone">Phone</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex shrink-0 items-center gap-1">
+            {Speech && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="size-11 rounded-full text-muted-foreground"
+                aria-label="Search by voice"
+                onClick={listen}
+              >
+                <Mic />
+              </Button>
+            )}
+            <Button
+              type="submit"
+              size="icon"
+              className="size-11 rounded-full"
+              aria-label="Search now"
+            >
+              {loading ? (
+                <LoaderCircle
+                  className="size-4 animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Search className="size-4" aria-hidden="true" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </form>
+      <p role="status" className="sr-only">
+        {loading
+          ? "Searching…"
+          : "Search by name or phone. Results update as you type."}
+      </p>
       {message && (
         <p role="alert" className="text-sm text-destructive">
           {message}

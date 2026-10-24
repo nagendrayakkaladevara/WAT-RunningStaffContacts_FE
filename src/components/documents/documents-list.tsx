@@ -2,6 +2,13 @@ import * as React from "react";
 import { Search, FileText, ExternalLink, X, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { documentsService } from "@/services/documents.service";
 import type { Document } from "@/types/document";
@@ -78,12 +85,9 @@ export function DocumentsList() {
         </div>
 
         {/* Documents skeleton */}
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-8 sm:grid-cols-2">
           {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm"
-            >
+            <div key={i} className="flex items-center gap-4 border-b py-6">
               <Skeleton className="h-10 w-10 rounded-md shrink-0" />
               <div className="min-w-0 flex-1">
                 <Skeleton className="h-4 w-3/4 mb-2" />
@@ -132,7 +136,7 @@ export function DocumentsList() {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 cursor-pointer"
+            className="absolute right-1 top-1/2 h-11 w-11 -translate-y-1/2 cursor-pointer"
             aria-label="Clear document search"
             onClick={() => setSearchQuery("")}
           >
@@ -141,35 +145,41 @@ export function DocumentsList() {
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3 text-sm">
-        <label>
-          Type{" "}
-          <select
-            className="ml-2 min-h-11 rounded-lg border bg-card px-3"
-            value={fileType}
-            onChange={(event) => setFileType(event.target.value)}
-          >
-            <option value="all">All documents</option>
-            <option value="pdf">PDF</option>
-            <option value="office">Office files</option>
-            <option value="link">Other links</option>
-          </select>
-        </label>
-        <label>
-          Sort{" "}
-          <select
-            className="ml-2 min-h-11 rounded-lg border bg-card px-3"
-            value={sort}
-            onChange={(event) => setSort(event.target.value)}
-          >
-            <option value="title">Title A–Z</option>
-            <option value="updated">Recently updated</option>
-          </select>
-        </label>
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="space-y-2">
+          <label htmlFor="document-type" className="text-sm font-medium">
+            File type
+          </label>
+          <Select value={fileType} onValueChange={setFileType}>
+            <SelectTrigger id="document-type" className="min-w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All documents</SelectItem>
+              <SelectItem value="pdf">PDF</SelectItem>
+              <SelectItem value="office">Office files</SelectItem>
+              <SelectItem value="link">Other links</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="document-sort" className="text-sm font-medium">
+            Sort by
+          </label>
+          <Select value={sort} onValueChange={setSort}>
+            <SelectTrigger id="document-sort" className="min-w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title">Title A–Z</SelectItem>
+              <SelectItem value="updated">Recently updated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       {/* Documents Grid */}
       {filteredDocuments.length === 0 ? (
-        <div className="rounded-lg border bg-card p-12 text-center shadow-sm">
+        <div className="rounded-xl bg-card px-6 py-14 text-center">
           <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold">
             {searchQuery ? "No documents found" : "No documents available"}
@@ -181,7 +191,7 @@ export function DocumentsList() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-8 sm:grid-cols-2">
           {filteredDocuments.map((doc) => (
             <a
               key={doc.id}
@@ -189,7 +199,7 @@ export function DocumentsList() {
               aria-disabled={!safeLink(doc.link)}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/50"
+              className="group flex items-center gap-4 border-b py-6 transition-colors hover:bg-card"
             >
               {/* Document Icon */}
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
@@ -198,7 +208,7 @@ export function DocumentsList() {
 
               {/* Document Title and Link */}
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                <h3 className="text-sm font-medium break-words group-hover:text-primary transition-colors">
                   {doc.title}
                 </h3>
                 {doc.updatedAt && !Number.isNaN(Date.parse(doc.updatedAt)) && (

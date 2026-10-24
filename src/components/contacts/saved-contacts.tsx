@@ -60,10 +60,10 @@ export function SavedContacts({
   const title = kind === "favorites" ? "Favorites" : "Recently viewed";
   const Icon = kind === "favorites" ? Star : Clock3;
   return (
-    <section className="space-y-3">
+    <section className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Icon className="size-4 text-primary" />
+        <h2 className="section-label flex items-center gap-2">
+          <Icon className="size-4 text-muted-foreground" />
           {title}
         </h2>
         {kind === "recent" && ids.length > 0 ? (
@@ -77,7 +77,7 @@ export function SavedContacts({
         ) : null}
       </div>
       {!ids.length ? (
-        <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
+        <div className="border-t py-6 text-sm leading-relaxed text-muted-foreground">
           {kind === "favorites"
             ? "Tap the star on a contact to keep them close."
             : "Contacts you open will appear here. This is not a call history."}

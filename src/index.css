@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@fontsource-variable/geist";
 @custom-variant dark (&:is(.dark *));
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -39,43 +40,157 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-
+/* Semantic mapping of my-design-system-files/design-system.md, v1.0.0.
+   The 1120px workspace is the specification's list/detail application extension. */
 :root {
-  --radius: .75rem;
-  --background: #f7f9fc; --foreground: #162338;
-  --card: #ffffff; --card-foreground: #162338;
-  --popover: #ffffff; --popover-foreground: #162338;
-  --primary: #245fce; --primary-foreground: #ffffff;
-  --secondary: #edf2fa; --secondary-foreground: #243b5a;
-  --muted: #edf1f6; --muted-foreground: #59697e;
-  --accent: #eaf0fc; --accent-foreground: #245fce;
-  --destructive: #c52e42; --border: #dee5ef; --input: #d4deeb; --ring: #245fce;
-  --chart-1: #245fce; --chart-2: #0c857d; --chart-3: #b3761d; --chart-4: #8b5cc0; --chart-5: #bd4d70;
-  --sidebar: var(--card); --sidebar-foreground: var(--foreground); --sidebar-primary: var(--primary); --sidebar-primary-foreground: var(--primary-foreground); --sidebar-accent: var(--accent); --sidebar-accent-foreground: var(--accent-foreground); --sidebar-border: var(--border); --sidebar-ring: var(--ring);
+  color-scheme: light;
+  --radius: 0.75rem;
+  --background: #ffffff;
+  --foreground: #171717;
+  --card: #fafafa;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #171717;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #404040;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
+  --destructive: #b91c1c;
+  --border: #e5e5e5;
+  --input: #8a8a8a;
+  --ring: #171717;
+  --divider: #ededed;
+  --border-hover: #d4d4d4;
+  --selection-bg: #111111;
+  --selection-fg: #ffffff;
+  --chart-1: #404040;
+  --chart-2: #737373;
+  --chart-3: #a3a3a3;
+  --chart-4: #047857;
+  --chart-5: #b45309;
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 .dark {
   color-scheme: dark;
-  --background: #101824; --foreground: #edf2fa;
-  --card: #172232; --card-foreground: #edf2fa;
-  --popover: #1c2a3d; --popover-foreground: #edf2fa;
-  --primary: #8eb6ff; --primary-foreground: #101d35;
-  --secondary: #22334b; --secondary-foreground: #edf2fa;
-  --muted: #203047; --muted-foreground: #acbad0;
-  --accent: #253c5e; --accent-foreground: #b9d2ff;
-  --destructive: #ff8c9c; --border: #304057; --input: #3e506a; --ring: #8eb6ff;
-  --chart-1: #8eb6ff; --chart-2: #5ccbbd; --chart-3: #efb757; --chart-4: #bf9be9; --chart-5: #eb94b0;
+  --background: oklch(0.145 0.012 44);
+  --foreground: oklch(0.955 0.016 72);
+  --card: oklch(0.2 0.018 46);
+  --card-foreground: oklch(0.955 0.016 72);
+  --popover: oklch(0.2 0.018 46);
+  --popover-foreground: oklch(0.955 0.016 72);
+  --primary: oklch(0.955 0.016 72);
+  --primary-foreground: oklch(0.145 0.012 44);
+  --secondary: oklch(0.235 0.02 47);
+  --secondary-foreground: oklch(0.87 0.02 68);
+  --muted: oklch(0.235 0.02 47);
+  --muted-foreground: oklch(0.685 0.032 60);
+  --accent: oklch(0.235 0.02 47);
+  --accent-foreground: oklch(0.955 0.016 72);
+  --destructive: #fca5a5;
+  --border: oklch(0.275 0.022 48);
+  --input: oklch(0.58 0.038 56);
+  --ring: #f7efe5;
+  --divider: oklch(0.275 0.022 48);
+  --border-hover: oklch(0.34 0.024 50);
+  --selection-bg: #f7efe5;
+  --selection-fg: #1d140f;
+  --chart-1: #f7efe5;
+  --chart-2: #c8bbae;
+  --chart-3: #998978;
+  --chart-4: #6ee7b7;
+  --chart-5: #fcd34d;
 }
 @layer base {
-  * { @apply border-border outline-ring/50; }
-  body { @apply bg-background text-foreground; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-  button, a, input, select { -webkit-tap-highlight-color: transparent; }
-  button:not(:disabled), summary { cursor: pointer; }
-  :focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 430;
+    -webkit-font-smoothing: antialiased;
+    transition:
+      background-color 300ms,
+      color 300ms;
+  }
+  button,
+  a,
+  input,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: var(--selection-bg);
+    color: var(--selection-fg);
+  }
+  h1,
+  h2,
+  h3,
+  p {
+    overflow-wrap: anywhere;
+  }
 }
-.mobile-nav { padding-bottom: env(safe-area-inset-bottom); }
+@layer components {
+  .page-stack {
+    @apply space-y-10 sm:space-y-14;
+  }
+  .page-heading {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+  .page-description {
+    @apply mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground;
+  }
+  .section-label {
+    @apply text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground;
+  }
+  .directory-tile {
+    @apply h-full border bg-card p-5 transition-colors duration-150 hover:border-[var(--border-hover)] hover:bg-accent;
+  }
+  .contact-row {
+    @apply grid min-w-0 gap-x-4 gap-y-3 border-b py-6 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center;
+    border-color: var(--divider);
+  }
+}
+.mobile-nav {
+  padding-bottom: env(safe-area-inset-bottom);
+}
 @media (max-width: 639px) {
-  .mobile-sheet { top: auto; bottom: 0; left: 0; width: 100%; max-width: none; transform: none; border-radius: 1.5rem 1.5rem 0 0; padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+  .mobile-sheet {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    transform: none;
+    border-radius: 0.75rem 0.75rem 0 0;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

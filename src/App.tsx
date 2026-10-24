@@ -12,11 +12,19 @@ import {
   Grid2X2,
   Star,
   MoreHorizontal,
+  Menu,
   TrainFront,
   FileText,
   ChartNoAxesCombined,
   Info,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Home } from "@/pages/Home";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { analyticsService } from "@/services/analytics.service";
@@ -59,6 +67,7 @@ const secondary = [
 let tracked = false;
 function Shell() {
   const location = useLocation();
+  const isHome = location.pathname === "/";
   const [savedRoutes, setSavedRoutes] = useState<Record<string, string>>({});
   const remember = () => {
     if (location.pathname === "/" || location.pathname === "/categories")
@@ -89,68 +98,94 @@ function Shell() {
       >
         Skip to content
       </a>
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r bg-card px-4 py-6 md:flex">
-        <Link to="/" className="mb-10 flex items-center gap-3 px-2">
-          <span className="rounded-xl bg-primary p-2.5 text-primary-foreground">
-            <TrainFront className="size-6" />
-          </span>
-          <span className="font-semibold tracking-tight">
-            WAT Contacts
-            <span className="block text-xs font-normal text-muted-foreground">
-              Waltair Division
+      <header
+        className={`sticky top-0 z-30 bg-background ${isHome ? "" : "border-b"}`}
+      >
+        <div className="mx-auto flex h-18 max-w-[1120px] items-center justify-between gap-4 px-6">
+          <Link
+            to="/"
+            onClick={remember}
+            className="flex min-h-11 items-center gap-3"
+          >
+            <TrainFront
+              aria-hidden="true"
+              className="size-6"
+              strokeWidth={1.5}
+            />
+            <span className="text-[15px] font-medium tracking-tight">
+              WAT Contacts
+              <span className="block text-xs font-normal tracking-normal text-muted-foreground">
+                Waltair Division
+              </span>
             </span>
-          </span>
-        </Link>
-        <nav aria-label="Main navigation" className="space-y-1">
-          {[...navigation.slice(0, 3), ...secondary].map(
-            ({ to, label, icon: Icon }) => (
+          </Link>
+          <nav
+            aria-label="Main navigation"
+            className={isHome ? "hidden" : "hidden items-center gap-1 md:flex"}
+          >
+            {navigation.map(({ to, label }) => (
               <NavLink
-                end={to === "/"}
                 key={to}
+                end={to === "/"}
                 to={destination(to)}
                 onClick={remember}
                 className={({ isActive }) =>
-                  `flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm ${isActive ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted"}`
+                  `relative flex min-h-11 items-center px-5 text-sm transition-colors ${isActive || (to === "/more" && secondary.some((item) => item.to === location.pathname)) ? "font-medium text-foreground after:absolute after:inset-x-5 after:bottom-0 after:h-px after:bg-foreground" : "text-muted-foreground hover:text-foreground"}`
                 }
               >
-                <Icon className="size-4" />
                 {label}
               </NavLink>
-            ),
-          )}
-        </nav>
-        <div className="mt-auto border-t pt-4">
-          <Link
-            to="/more"
-            className="flex min-h-11 items-center gap-3 px-3 text-sm text-muted-foreground"
-          >
-            <MoreHorizontal className="size-4" />
-            App settings
-          </Link>
-          <p className="px-3 pt-4 text-xs leading-relaxed text-muted-foreground">
-            Developed by
-            <br />
-            Nagendra Yakkaladevara
-          </p>
+            ))}
+          </nav>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <div className={isHome ? "" : "md:hidden"}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Open navigation"
+                    className="rounded-full"
+                  >
+                    <Menu
+                      aria-hidden="true"
+                      className="size-5"
+                      strokeWidth={1.5}
+                    />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                  {[...navigation, ...secondary].map(
+                    ({ to, label, icon: Icon }) => (
+                      <DropdownMenuItem
+                        asChild
+                        key={to}
+                        className="min-h-11 rounded-lg"
+                      >
+                        <Link
+                          to={destination(to)}
+                          onClick={remember}
+                          aria-current={
+                            location.pathname === to ? "page" : undefined
+                          }
+                        >
+                          <Icon aria-hidden="true" />
+                          {label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ),
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
-      </aside>
-      <div className="md:ml-60">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur sm:px-7">
-          <Link
-            to="/"
-            className="flex items-center gap-2 font-semibold md:hidden"
-          >
-            <TrainFront className="size-5 text-primary" />
-            WAT Contacts
-          </Link>
-          <p className="hidden text-sm text-muted-foreground md:block">
-            Your railway directory
-          </p>
-          <ThemeToggle />
-        </header>
+      </header>
+      <div>
         <main
           id="main-content"
-          className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-7 sm:pt-8 md:pb-10"
+          className={`mx-auto max-w-[1120px] px-6 ${isHome ? "" : "pb-32 pt-10 sm:pt-14 md:pb-16"}`}
         >
           <Suspense
             fallback={
@@ -185,26 +220,36 @@ function Shell() {
             </Routes>
           </Suspense>
         </main>
+        {!isHome && (
+          <footer className="mx-auto hidden max-w-[1120px] items-center justify-between gap-4 border-t px-6 py-8 text-xs text-muted-foreground md:flex">
+            <span>East Coast Railway · Waltair Division</span>
+            <Link to="/about" className="py-3 hover:text-foreground">
+              Made by Nagendra Yakkaladevara
+            </Link>
+          </footer>
+        )}
       </div>
-      <nav
-        aria-label="Mobile navigation"
-        className="mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-card/95 backdrop-blur md:hidden"
-      >
-        {navigation.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            end={to === "/"}
-            key={to}
-            to={destination(to)}
-            onClick={remember}
-            className={({ isActive }) =>
-              `flex min-h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium ${isActive || (to === "/more" && secondary.some((item) => item.to === location.pathname)) ? "text-primary" : "text-muted-foreground"}`
-            }
-          >
-            <Icon className="size-5" />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+      {!isHome && (
+        <nav
+          aria-label="Mobile navigation"
+          className="mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-background md:hidden"
+        >
+          {navigation.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              end={to === "/"}
+              key={to}
+              to={destination(to)}
+              onClick={remember}
+              className={({ isActive }) =>
+                `flex min-h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium ${isActive || (to === "/more" && secondary.some((item) => item.to === location.pathname)) ? "text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground"}`
+              }
+            >
+              <Icon aria-hidden="true" className="size-5" strokeWidth={1.5} />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 ## Delivered
 
-- Mobile bottom navigation and desktop sidebar, compact branding, blue primary tokens, light/dark themes, larger touch targets and reduced-motion support.
+- Compact top navigation on desktop and bottom navigation on mobile, a spacious 1120px workspace, neutral shadcn tokens, warm dark mode, larger touch targets and reduced-motion support.
 - Unified name/phone search with auto detection, a manual override, 400 ms debounce, Enter submission and editable input during requests. Pending work is cancelled on query changes, clear and unmount; stale results cannot overwrite a newer search.
 - Keyboard-accessible contact detail buttons, mobile detail sheets, call/copy feedback, favorites, native sharing/clipboard fallback and escaped vCard export.
 - Favorites and recently viewed contacts stored locally as IDs plus phone lookup hints. Full contact records and blood groups are not persisted. Data is refreshed with the existing phone search route and matched by ID, so a reassigned number cannot silently show a different person. Recently viewed is not call history. Maximum 100 favorites and 12 recent IDs.
@@ -52,3 +52,16 @@ Regression coverage includes debouncing, search-mode changes with unchanged text
 Manual deploy-preview checklist: 360/390/768/1440 px widths, light/dark mode, browser Back/Forward, search restoration through navigation, filter sheet apply/close, actual dialer and clipboard, voice permissions, sharing/vCard import, favorites refresh, documents, offline explanation, install prompt, and API 429/503 states.
 
 Browser visual verification and live authenticated backend verification remain required before release. Local Chromium could not launch because the execution environment denies its socket operation, and the cloud browser could not reach the local dev server. Automated DOM interaction tests passed; they do not substitute for visual/device checks.
+
+
+## Visual system
+
+Source: [Nagendra’s design system v1.0.0](https://github.com/nagendrayakkaladevara/my-design-system-files/blob/main/design-system.md), reviewed from file SHA `21dbfe28657c682d2ec107f3f0363fdd92766455`.
+
+- `src/index.css` maps the specification’s white canvas, #fafafa surfaces, custom warm OKLCH dark palette, typography and neutral actions to shadcn semantic variables. Essential field borders are darker than decorative borders for visibility.
+- Geist Variable is bundled through `@fontsource-variable/geist` (OFL-1.1), including its license in the package; no external font service is contacted. Body weight is 430.
+- The 1120px workspace follows the specification’s CRUD/list-detail extension. Page gutters are 24px, top padding is 40px on phones / 56px at 640px and above, and section spacing is 40px / 56px. The desktop navigation starts at 768px; phone navigation remains available below it.
+- Shared Button, Card, Input, Checkbox, Dialog and Select primitives use the system’s neutral colors, 8–12px rounding and comfortable targets. Select uses Radix keyboard navigation, selection, dismissal and focus management. Cards are flat; shadows are reserved for overlays.
+- Home uses a ChatGPT-inspired, centered search composer and a single heading. Category tiles, saved-contact sections, footer and mobile bottom navigation are absent on this route; all destinations are reachable from the shadcn navigation menu. Search keeps an accessible label, automatic/name/phone selection and separate clear/voice/search actions. Contact lists use dividers and initials rather than repeated raised cards. Long names wrap and actions are always visible.
+- Category, documents, favorites, More, About and analytics pages share the same visual language. About no longer uses gradients, oversized headings or decorative animation.
+- Visual/device acceptance remains pending: review both themes at 320, 390, 640, 768, 1024 and 1440px, enlarged text, long names, keyboard menus, dialog focus and mobile safe areas. DOM tests cover the search/filter behavior but are not a visual certification. Local Chromium launch was blocked by `socket() failed: Operation not permitted`.

@@ -1,18 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Briefcase, Train, Hotel, HeartPulse, ArrowRight } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { ContactsSearch } from "@/components/contacts/contacts-search";
 import { isPhoneQuery, type SearchMode } from "@/lib/contact-search";
 import { ContactsList } from "@/components/contacts/contacts-list";
 import { PaginationControls } from "@/components/contacts/pagination-controls";
-import { SavedContacts } from "@/components/contacts/saved-contacts";
 import { useContactsSearch } from "@/hooks/use-contacts-search";
-const shortcuts = [
-  { id: "division", title: "Running staff", icon: Briefcase },
-  { id: "stations", title: "Stations", icon: Train },
-  { id: "hotels", title: "Hotels", icon: Hotel },
-  { id: "blood-group", title: "Blood groups", icon: HeartPulse },
-];
 export function Home() {
   const [params, setParams] = useSearchParams();
   const query = params.get("q") || "";
@@ -79,21 +71,17 @@ export function Home() {
     );
   }
   return (
-    <div className="space-y-7">
-      <section>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-          East Coast Railway · Waltair Division
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Who are you looking for?
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Running staff, stations and places along your route.
-        </p>
-      </section>
+    <div
+      className={`mx-auto w-full max-w-3xl ${query.trim() ? "space-y-8 py-10" : "flex min-h-[calc(100svh-4.5rem)] flex-col justify-center pb-20"}`}
+    >
+      <h1
+        className={`page-heading ${query.trim() ? "sr-only" : "mb-8 text-center"}`}
+      >
+        Who are you looking for?
+      </h1>
       <section
         aria-label="Contact search"
-        className="sticky top-16 z-20 -mx-1 bg-background/95 px-1 py-2 backdrop-blur"
+        className="sticky top-18 z-20 bg-background py-2"
       >
         <ContactsSearch
           query={query}
@@ -106,40 +94,10 @@ export function Home() {
           }}
         />
       </section>
-      {!query.trim() ? (
-        <>
-          <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-semibold">Browse directory</h2>
-              <Link
-                to="/categories"
-                className="flex min-h-11 items-center gap-1 text-sm text-primary"
-              >
-                View all <ArrowRight className="size-4" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {shortcuts.map(({ id, title, icon: Icon }) => (
-                <Link
-                  key={id}
-                  to={`/categories?category=${id}`}
-                  className="rounded-2xl border bg-card p-4 transition-colors hover:border-primary/40"
-                >
-                  <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="size-5" />
-                  </div>
-                  <span className="text-sm font-medium">{title}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-          <SavedContacts kind="favorites" compact />
-          <SavedContacts kind="recent" compact />
-        </>
-      ) : (
+      {query.trim() && (
         <section aria-label="Search results">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold">Search results</h2>
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="section-label">Search results</h2>
             {pagination && (
               <p role="status" className="text-sm text-muted-foreground">
                 {pagination.total} contacts found
