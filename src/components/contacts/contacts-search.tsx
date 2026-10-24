@@ -1,370 +1,193 @@
-/**
- * ContactsSearch Component
- * Search bar with name/phone toggle for searching contacts
- */
-
-import { useState, useEffect, useRef } from "react"
-import { Search, X, Mic, MicOff, StopCircleIcon } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "../ui/button"
-
-// Web Speech API type definitions
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean
-  interimResults: boolean
-  lang: string
-  start(): void
-  stop(): void
-  abort(): void
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null
+import { useEffect, useRef, useState } from "react";
+import { Search, Mic, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import type { SearchMode } from "@/lib/contact-search";
+interface Recognition {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult:
+    | ((event: {
+        results: ArrayLike<ArrayLike<{ transcript: string }>>;
+      }) => void)
+    | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  abort(): void;
 }
-
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList
-  resultIndex: number
+type SpeechWindow = Window & {
+  SpeechRecognition?: new () => Recognition;
+  webkitSpeechRecognition?: new () => Recognition;
+};
+interface Props {
+  query: string;
+  mode: SearchMode;
+  loading: boolean;
+  onChange: (query: string, mode: SearchMode) => void;
+  onSubmit: () => void;
 }
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string
-  message: string
-}
-
-interface SpeechRecognitionResultList {
-  length: number
-  item(index: number): SpeechRecognitionResult
-  [index: number]: SpeechRecognitionResult
-}
-
-interface SpeechRecognitionResult {
-  length: number
-  item(index: number): SpeechRecognitionAlternative
-  [index: number]: SpeechRecognitionAlternative
-  isFinal: boolean
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string
-  confidence: number
-}
-
-// interface Window {
-//   SpeechRecognition: {
-//     new (): SpeechRecognition
-//   } | undefined
-//   webkitSpeechRecognition: {
-//     new (): SpeechRecognition
-//   } | undefined
-// }
-
-interface ContactsSearchProps {
-  onSearch: (query: string, isPhoneSearch: boolean) => void
-  loading: boolean
-}
-
-export function ContactsSearch({ onSearch, loading }: ContactsSearchProps) {
-  const [query, setQuery] = useState("")
-  const [isPhoneSearch, setIsPhoneSearch] = useState(false)
-  const [isListening, setIsListening] = useState(false)
-  const [isSpeechSupported, setIsSpeechSupported] = useState(false)
-  
-  // Use refs to store values and prevent unnecessary re-renders
-  const onSearchRef = useRef(onSearch)
-  const lastSearchedQueryRef = useRef<string>("")
-  const isMountedRef = useRef(true)
-  const isInitialMountRef = useRef(true)
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
-  
-  // Update ref when onSearch changes
-  useEffect(() => {
-    onSearchRef.current = onSearch
-  }, [onSearch])
-
-  // Track component mount state
-  useEffect(() => {
-    isMountedRef.current = true
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
-
-  // Check if Web Speech API is supported
-  useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    setIsSpeechSupported(!!SpeechRecognition)
-
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition()
-      recognition.continuous = false
-      recognition.interimResults = false
-      recognition.lang = 'en-US'
-      
-      recognition.onstart = () => {
-        setIsListening(true)
+export function ContactsSearch({
+  query,
+  mode,
+  loading,
+  onChange,
+  onSubmit,
+}: Props) {
+  const [listening, setListening] = useState(false);
+  const [message, setMessage] = useState("");
+  const recognition = useRef<Recognition | null>(null);
+  const Speech =
+    (window as SpeechWindow).SpeechRecognition ||
+    (window as SpeechWindow).webkitSpeechRecognition;
+  useEffect(
+    () => () => {
+      const current = recognition.current;
+      if (current) {
+        current.onresult = null;
+        current.onerror = null;
+        current.onend = null;
+        current.abort();
       }
-      
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        // Safely access transcript with proper checks
-        if (
-          event.results &&
-          event.results.length > 0 &&
-          event.results[0] &&
-          event.results[0].length > 0 &&
-          event.results[0][0] &&
-          event.results[0][0].transcript
-        ) {
-          const transcript = event.results[0][0].transcript.trim()
-          if (transcript) {
-            setQuery(transcript)
-            // Set last searched query to prevent debounced effect from searching again
-            lastSearchedQueryRef.current = transcript
-            // Trigger search immediately for voice input
-            onSearchRef.current(transcript, false)
-          }
-        } else {
-          console.warn('Speech recognition result is empty or invalid')
-        }
-      }
-      
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error:', event.error)
-        setIsListening(false)
-        if (event.error === 'no-speech') {
-          // User didn't speak, just stop listening
-          setIsListening(false)
-        } else if (event.error === 'not-allowed') {
-          alert('Microphone permission denied. Please allow microphone access to use voice search.')
-        }
-      }
-      
-      recognition.onend = () => {
-        setIsListening(false)
-      }
-      
-      recognitionRef.current = recognition
-    }
-    
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop()
-      }
-    }
-  }, [])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    
-    if (isPhoneSearch) {
-      // Only allow numbers, +, -, spaces, and parentheses for phone numbers
-      const phonePattern = /^[0-9+\-\s()]*$/
-      if (phonePattern.test(value) || value === "") {
-        setQuery(value)
-      }
-    } else {
-      // Allow all characters for name search
-      setQuery(value)
+    },
+    [],
+  );
+  function stop() {
+    recognition.current?.abort();
+    setListening(false);
+  }
+  function listen() {
+    if (!Speech) return;
+    setMessage("");
+    const current = new Speech();
+    current.lang = "en-IN";
+    current.continuous = false;
+    current.interimResults = false;
+    current.onresult = (event) => {
+      const text = event.results[0]?.[0]?.transcript?.trim();
+      if (text) onChange(text, "name");
+      setListening(false);
+    };
+    current.onerror = (event) => {
+      setListening(false);
+      setMessage(
+        event.error === "not-allowed"
+          ? "Microphone access was denied. Allow access in browser settings or type your search."
+          : "Voice search could not hear you. Please try again or type your search.",
+      );
+    };
+    current.onend = () => setListening(false);
+    recognition.current = current;
+    try {
+      current.start();
+      setListening(true);
+    } catch {
+      setMessage("Voice search is unavailable. Please type your search.");
     }
   }
-
-  // Debounced search effect with edge case handling
-  useEffect(() => {
-    // Don't search on initial mount (only when user types)
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false
-      return
-    }
-
-    // Don't search if component is unmounted
-    if (!isMountedRef.current) {
-      return
-    }
-
-    const trimmedQuery = query.trim()
-    const isEmpty = trimmedQuery === ""
-    
-    // Skip if this is the same query we just searched
-    if (trimmedQuery === lastSearchedQueryRef.current) {
-      return
-    }
-
-    const timer = setTimeout(() => {
-      // Double-check component is still mounted
-      if (!isMountedRef.current) {
-        return
-      }
-
-      // Don't search if loading (prevent race conditions)
-      if (loading) {
-        return
-      }
-
-      if (isEmpty) {
-        // Clear results when input is empty or whitespace-only
-        lastSearchedQueryRef.current = ""
-        onSearchRef.current("", isPhoneSearch)
-      } else {
-        // Only search if query has minimum length (at least 1 character after trim)
-        if (trimmedQuery.length >= 1) {
-          lastSearchedQueryRef.current = trimmedQuery
-          onSearchRef.current(trimmedQuery, isPhoneSearch)
-        }
-      }
-    }, 1500) // 1500ms = 1.5 seconds debounce delay
-
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [query, isPhoneSearch, loading])
-
-  const handleClear = () => {
-    setQuery("")
-    lastSearchedQueryRef.current = ""
-    onSearchRef.current("", isPhoneSearch)
-  }
-
-  const handlePhoneCheckboxChange = (checked: boolean) => {
-    setIsPhoneSearch(checked)
-    // Stop listening if switching to phone search
-    if (checked && isListening && recognitionRef.current) {
-      recognitionRef.current.stop()
-    }
-    // Clear the query if switching modes and it contains invalid characters
-    if (checked && query) {
-      const phonePattern = /^[0-9+\-\s()]*$/
-      if (!phonePattern.test(query)) {
-        setQuery("")
-      }
-    }
-  }
-
-  const handleMicClick = () => {
-    if (!isSpeechSupported || !recognitionRef.current) {
-      alert('Voice search is not supported in your browser.')
-      return
-    }
-
-    if (isListening) {
-      // Stop listening
-      recognitionRef.current.stop()
-      setIsListening(false)
-    } else {
-      // Start listening
-      try {
-        recognitionRef.current.start()
-      } catch (error) {
-        console.error('Error starting speech recognition:', error)
-        setIsListening(false)
-      }
-    }
-  }
-
   return (
-    <>
-      {/* Listening Popup Overlay */}
-      {isListening && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-card rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 border-2 border-primary/20">
-            <div className="flex flex-col items-center gap-6">
-              {/* Animated Mic Icon */}
-              <div className="relative">
-                <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
-                <div className="relative bg-red-500/10 rounded-full p-6">
-                  <Mic className="h-16 w-16 text-red-500 animate-pulse" />
-                </div>
-              </div>
-              
-              {/* Text */}
-              <div className="text-center space-y-2">
-                <h3 className="text-xl font-semibold">Listening...</h3>
-                <p className="text-sm text-muted-foreground">
-                  Speak now to Search Contacts by name
-                </p>
-              </div>
-              
-              {/* Stop Button */}
-              <Button
-                variant="destructive"
-                onClick={handleMicClick}
-              >
-                <StopCircleIcon className="h-4 w-4" />
-                Stop
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="space-y-3">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSubmit();
+        }}
+        className="flex gap-2"
+      >
+        <div className="relative min-w-0 flex-1">
+          <Search className="absolute left-4 top-4 size-5 text-muted-foreground" />
+          <label htmlFor="contact-search" className="sr-only">
+            Search contacts
+          </label>
           <Input
-            type={isPhoneSearch ? "tel" : "text"}
-            placeholder={isPhoneSearch ? "Enter phone number..." : "Search by name..."}
+            id="contact-search"
             value={query}
-            onChange={handleChange}
-            className={`pl-9 ${isPhoneSearch || !isSpeechSupported ? (query ? 'pr-9' : 'pr-9') : query ? 'pr-20' : 'pr-12'} border-foreground/90 dark:border-foreground/90`}
-            disabled={loading || isListening}
-            inputMode={isPhoneSearch ? "tel" : "text"}
+            onChange={(event) => onChange(event.target.value, mode)}
+            placeholder="Search by name or phone number"
+            inputMode={mode === "phone" ? "tel" : "search"}
+            className="h-13 rounded-xl bg-card pl-11 pr-12 text-base shadow-sm"
+            autoComplete="off"
           />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            {loading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            ) : (
-              <>
-                {/* Mic icon - only show for name search and when speech is supported */}
-                {!isPhoneSearch && isSpeechSupported && (
-                  <button
-                    type="button"
-                    onClick={handleMicClick}
-                    className={`text-muted-foreground hover:text-foreground transition-colors ${
-                      isListening ? 'text-red-500 animate-pulse' : ''
-                    }`}
-                    aria-label={isListening ? "Stop listening" : "Start voice search"}
-                    disabled={loading}
-                  >
-                    {isListening ? (
-                      <MicOff className="h-4 w-4" />
-                    ) : (
-                      <Mic className="h-4 w-4" />
-                    )}
-                  </button>
-                )}
-                {/* Clear button - show when there's text */}
-                {query && (
-                  <button
-                    type="button"
-                    onClick={handleClear}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label="Clear search"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
+          {query && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1 size-11"
+              aria-label="Clear search"
+              onClick={() => onChange("", mode)}
+            >
+              <X />
+            </Button>
+          )}
         </div>
-      <div className="flex justify-end items-center gap-2">
-        <Checkbox
-          id="phone-search"
-          checked={isPhoneSearch}
-          onCheckedChange={(checked) => handlePhoneCheckboxChange(checked === true)}
-          disabled={loading}
-        />
-        <Label
-          htmlFor="phone-search"
-          className="text-sm font-normal cursor-pointer flex items-center gap-2"
+        {Speech && (
+          <Button
+            type="button"
+            variant="outline"
+            className="size-13 rounded-xl"
+            aria-label="Search by voice"
+            onClick={listen}
+          >
+            <Mic />
+          </Button>
+        )}
+        <Button
+          type="submit"
+          className="h-13 rounded-xl px-4"
+          aria-label="Search now"
         >
-          Search by phone number
-        </Label>
+          <Search className="size-5" />
+          <span className="hidden sm:inline">Search</span>
+        </Button>
+      </form>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <p role="status">
+          {loading ? "Searching…" : "Find your people. Get in touch."}
+        </p>
+        <label className="flex items-center gap-2">
+          Search in
+          <select
+            aria-label="Search mode"
+            value={mode}
+            onChange={(event) =>
+              onChange(query, event.target.value as SearchMode)
+            }
+            className="min-h-10 rounded-lg border bg-card px-2 text-foreground"
+          >
+            <option value="auto">Auto detect</option>
+            <option value="name">Name</option>
+            <option value="phone">Phone</option>
+          </select>
+        </label>
       </div>
+      {message && (
+        <p role="alert" className="text-sm text-destructive">
+          {message}
+        </p>
+      )}
+      <Dialog
+        open={listening}
+        onOpenChange={(open) => {
+          if (!open) stop();
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>Listening…</DialogTitle>
+          <DialogDescription>
+            Say a name to search the directory.
+          </DialogDescription>
+          <Mic className="mx-auto my-6 size-12 text-primary" />
+          <Button onClick={stop}>Stop listening</Button>
+        </DialogContent>
+      </Dialog>
     </div>
-    </>
-  )
+  );
 }
-

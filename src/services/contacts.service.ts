@@ -33,18 +33,19 @@ export class ContactsService {
    */
   async getAllContacts(
     page: number = DEFAULT_PAGINATION.page,
-    limit: number = DEFAULT_PAGINATION.limit
+    limit: number = DEFAULT_PAGINATION.limit,
+    signal?: AbortSignal
   ): Promise<PaginatedContactsResponse> {
     const endpoint = API_ENDPOINTS.contacts.getAll(page, limit)
-    return apiClient.get<PaginatedContactsResponse>(endpoint)
+    return signal ? apiClient.get<PaginatedContactsResponse>(endpoint, { signal }) : apiClient.get<PaginatedContactsResponse>(endpoint)
   }
 
   /**
    * Get contact by ID
    */
-  async getContactById(id: string): Promise<Contact> {
+  async getContactById(id: string, signal?: AbortSignal): Promise<Contact> {
     const endpoint = API_ENDPOINTS.contacts.getById(id)
-    return apiClient.get<Contact>(endpoint)
+    return signal ? apiClient.get<Contact>(endpoint, { signal }) : apiClient.get<Contact>(endpoint)
   }
 
   /**
@@ -82,19 +83,20 @@ export class ContactsService {
   async searchByName(
     query: string,
     page: number = DEFAULT_PAGINATION.page,
-    limit: number = DEFAULT_PAGINATION.limit
+    limit: number = DEFAULT_PAGINATION.limit,
+    signal?: AbortSignal
   ): Promise<PaginatedContactsResponse> {
     const endpoint = API_ENDPOINTS.contacts.searchByName(query, page, limit)
-    return apiClient.get<PaginatedContactsResponse>(endpoint)
+    return signal ? apiClient.get<PaginatedContactsResponse>(endpoint, { signal }) : apiClient.get<PaginatedContactsResponse>(endpoint)
   }
 
   /**
    * Search contact by phone number
    * @param phone - Phone number to search
    */
-  async searchByPhone(phone: string): Promise<PaginatedContactsResponse> {
+  async searchByPhone(phone: string, signal?: AbortSignal): Promise<PaginatedContactsResponse> {
     const endpoint = API_ENDPOINTS.contacts.searchByPhone(phone)
-    const response = await apiClient.get<any>(endpoint)
+    const response = await apiClient.get<Partial<PaginatedContactsResponse> & { count?: number; limit?: number; page?: number }>(endpoint, ...(signal ? [{ signal }] : []))
     
     // Handle API response format that might have 'count' instead of 'pagination'
     if (response && 'count' in response && !('pagination' in response)) {
@@ -155,13 +157,14 @@ export class ContactsService {
     bloodGroups: string[] = [],
     lobbies: string[] = [],
     page: number = DEFAULT_PAGINATION.page,
-    limit: number = DEFAULT_PAGINATION.limit
+    limit: number = DEFAULT_PAGINATION.limit,
+    signal?: AbortSignal
   ): Promise<PaginatedContactsResponse> {
     if (bloodGroups.length === 0 && lobbies.length === 0) {
       throw new Error("At least one blood group or lobby is required")
     }
     const endpoint = API_ENDPOINTS.contacts.getByBloodGroup(bloodGroups, lobbies, page, limit)
-    return apiClient.get<PaginatedContactsResponse>(endpoint)
+    return signal ? apiClient.get<PaginatedContactsResponse>(endpoint, { signal }) : apiClient.get<PaginatedContactsResponse>(endpoint)
   }
 
   /**
@@ -196,13 +199,14 @@ export class ContactsService {
     lobbies: string[] = [],
     designations: string[] = [],
     page: number = DEFAULT_PAGINATION.page,
-    limit: number = DEFAULT_PAGINATION.limit
+    limit: number = DEFAULT_PAGINATION.limit,
+    signal?: AbortSignal
   ): Promise<PaginatedContactsResponse> {
     if (lobbies.length === 0 && designations.length === 0) {
       throw new Error("At least one lobby or designation is required")
     }
     const endpoint = API_ENDPOINTS.contacts.getByLobby(lobbies, designations, page, limit)
-    return apiClient.get<PaginatedContactsResponse>(endpoint)
+    return signal ? apiClient.get<PaginatedContactsResponse>(endpoint, { signal }) : apiClient.get<PaginatedContactsResponse>(endpoint)
   }
 
   /**
@@ -219,13 +223,14 @@ export class ContactsService {
     lobbies: string[] = [],
     designations: string[] = [],
     page: number = DEFAULT_PAGINATION.page,
-    limit: number = DEFAULT_PAGINATION.limit
+    limit: number = DEFAULT_PAGINATION.limit,
+    signal?: AbortSignal
   ): Promise<PaginatedContactsResponse> {
     if (bloodGroups.length === 0 && lobbies.length === 0 && designations.length === 0) {
       throw new Error("At least one filter (bloodGroup, lobby, or designation) is required")
     }
     const endpoint = API_ENDPOINTS.contacts.filter(bloodGroups, lobbies, designations, page, limit)
-    return apiClient.get<PaginatedContactsResponse>(endpoint)
+    return signal ? apiClient.get<PaginatedContactsResponse>(endpoint, { signal }) : apiClient.get<PaginatedContactsResponse>(endpoint)
   }
 }
 

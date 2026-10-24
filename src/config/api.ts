@@ -1,36 +1,5 @@
-/**
- * API Configuration
- * Centralized configuration for API endpoints and base URL
- */
-
-/**
- * Get the API base URL from environment variables or use default
- */
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-  console.log(API_BASE_URL);
-
-/**
- * Get the API key from environment variables
- */
-export const API_KEY = import.meta.env.VITE_API_KEY || "";
-
-/**
- * Get Basic Auth credentials from environment variables
- */
-export const API_USERNAME = import.meta.env.VITE_API_USERNAME || "";
-export const API_PASSWORD = import.meta.env.VITE_API_PASSWORD || "";
-
-/**
- * Generate Basic Auth header value
- */
-export const getBasicAuthHeader = (): string => {
-  if (!API_USERNAME || !API_PASSWORD) {
-    return "";
-  }
-  const credentials = `${API_USERNAME}:${API_PASSWORD}`;
-  return `Basic ${btoa(credentials)}`;
-};
+/** Same-origin Netlify proxy. Secrets belong in server environment variables. */
+export const API_BASE_URL = ""
 
 /**
  * API endpoints configuration

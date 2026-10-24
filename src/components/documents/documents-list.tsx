@@ -1,54 +1,73 @@
-import * as React from "react"
-import { Search, FileText, ExternalLink, X, RefreshCw } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { documentsService } from "@/services/documents.service"
-import type { Document } from "@/types/document"
+import * as React from "react";
+import { Search, FileText, ExternalLink, X, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { documentsService } from "@/services/documents.service";
+import type { Document } from "@/types/document";
 
 export function DocumentsList() {
-  const [documents, setDocuments] = React.useState<Document[]>([])
-  const [filteredDocuments, setFilteredDocuments] = React.useState<Document[]>([])
-  const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const [documents, setDocuments] = React.useState<Document[]>([]);
+  const [fileType, setFileType] = React.useState("all");
+  const [sort, setSort] = React.useState("title");
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   // Fetch documents function
   const fetchDocuments = React.useCallback(async () => {
     try {
-      setLoading(true)
-      setError(null)
-      const data = await documentsService.getDocuments()
-      setDocuments(data)
-      setFilteredDocuments(data)
+      setLoading(true);
+      setError(null);
+      const data = await documentsService.getDocuments();
+      setDocuments(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch documents")
-      console.error("Error fetching documents:", err)
-      setDocuments([])
-      setFilteredDocuments([])
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch documents",
+      );
+      console.error("Error fetching documents:", err);
+      setDocuments([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   // Fetch documents on mount
   React.useEffect(() => {
-    fetchDocuments()
-  }, [fetchDocuments])
+    fetchDocuments();
+  }, [fetchDocuments]);
 
-  // Filter documents based on search query (title only)
-  React.useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredDocuments(documents)
-      return
+  const typeOf = (link: string) => {
+    try {
+      const path = new URL(link).pathname.toLowerCase();
+      return path.endsWith(".pdf")
+        ? "pdf"
+        : /\.(docx?|xlsx?|pptx?)$/.test(path)
+          ? "office"
+          : "link";
+    } catch {
+      return "link";
     }
-
-    const query = searchQuery.toLowerCase().trim()
-    const filtered = documents.filter((doc) =>
-      doc.title.toLowerCase().includes(query)
+  };
+  const filteredDocuments = documents
+    .filter(
+      (doc) =>
+        doc.title.toLowerCase().includes(searchQuery.trim().toLowerCase()) &&
+        (fileType === "all" || typeOf(doc.link) === fileType),
     )
-    setFilteredDocuments(filtered)
-  }, [searchQuery, documents])
+    .sort((a, b) =>
+      sort === "title"
+        ? a.title.localeCompare(b.title)
+        : (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0),
+    );
+  const safeLink = (link: string) => {
+    try {
+      const url = new URL(link);
+      return ["https:", "http:"].includes(url.protocol) ? url.href : undefined;
+    } catch {
+      return undefined;
+    }
+  };
 
   if (loading) {
     return (
@@ -61,7 +80,10 @@ export function DocumentsList() {
         {/* Documents skeleton */}
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm">
+            <div
+              key={i}
+              className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm"
+            >
               <Skeleton className="h-10 w-10 rounded-md shrink-0" />
               <div className="min-w-0 flex-1">
                 <Skeleton className="h-4 w-3/4 mb-2" />
@@ -71,7 +93,7 @@ export function DocumentsList() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -90,7 +112,7 @@ export function DocumentsList() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -100,16 +122,18 @@ export function DocumentsList() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="text"
+          aria-label="Search documents"
           placeholder="Search documents by title..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 pr-9 border-foreground/90 dark:border-foreground/90"
+          className="h-12 rounded-xl bg-card pl-9 pr-12"
         />
         {searchQuery && (
           <Button
             variant="ghost"
             size="icon"
             className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 cursor-pointer"
+            aria-label="Clear document search"
             onClick={() => setSearchQuery("")}
           >
             <X className="h-4 w-4" />
@@ -117,6 +141,32 @@ export function DocumentsList() {
         )}
       </div>
 
+      <div className="flex flex-wrap gap-3 text-sm">
+        <label>
+          Type{" "}
+          <select
+            className="ml-2 min-h-11 rounded-lg border bg-card px-3"
+            value={fileType}
+            onChange={(event) => setFileType(event.target.value)}
+          >
+            <option value="all">All documents</option>
+            <option value="pdf">PDF</option>
+            <option value="office">Office files</option>
+            <option value="link">Other links</option>
+          </select>
+        </label>
+        <label>
+          Sort{" "}
+          <select
+            className="ml-2 min-h-11 rounded-lg border bg-card px-3"
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
+            <option value="title">Title A–Z</option>
+            <option value="updated">Recently updated</option>
+          </select>
+        </label>
+      </div>
       {/* Documents Grid */}
       {filteredDocuments.length === 0 ? (
         <div className="rounded-lg border bg-card p-12 text-center shadow-sm">
@@ -135,7 +185,8 @@ export function DocumentsList() {
           {filteredDocuments.map((doc) => (
             <a
               key={doc.id}
-              href={doc.link}
+              href={safeLink(doc.link)}
+              aria-disabled={!safeLink(doc.link)}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/50"
@@ -147,12 +198,21 @@ export function DocumentsList() {
 
               {/* Document Title and Link */}
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">
+                <h3 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
                   {doc.title}
                 </h3>
+                {doc.updatedAt && !Number.isNaN(Date.parse(doc.updatedAt)) && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Updated {new Date(doc.updatedAt).toLocaleDateString()}
+                  </p>
+                )}
                 <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <ExternalLink className="h-3 w-3" />
-                  <span>Open</span>
+                  <span>
+                    {safeLink(doc.link)
+                      ? "Open in new tab"
+                      : "Link unavailable"}
+                  </span>
                 </div>
               </div>
             </a>
@@ -168,6 +228,5 @@ export function DocumentsList() {
         </div>
       )}
     </div>
-  )
+  );
 }
-

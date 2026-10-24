@@ -1,237 +1,137 @@
-/**
- * ContactsList Component
- * Displays a list of contacts in a table format with loading and error states
- */
-
-import { useState } from "react"
-import { Contact as ContactIcon, Phone, Building2, Briefcase, HeartPulse, RefreshCw } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
-import { ContactActions } from "@/components/contacts/contact-actions"
-import { ContactDetailsDialog } from "@/components/contacts/contact-details-dialog"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { formatPhoneNumber } from "@/lib/phone-formatter"
-import type { Contact } from "@/types/contact"
-
-interface ContactsListProps {
-  contacts: Contact[]
-  loading: boolean
-  error: string | null
-  hasSearched?: boolean
-  onRetry?: () => void
+import { useState } from "react";
+import { Star, Users, ArrowUpRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ContactActions } from "./contact-actions";
+import { ContactDetailsDialog } from "./contact-details-dialog";
+import {
+  recordViewed,
+  toggleFavorite,
+  useContactPreferences,
+} from "@/lib/contact-preferences";
+import type { Contact } from "@/types/contact";
+interface Props {
+  contacts: Contact[];
+  loading: boolean;
+  error: string | null;
+  hasSearched?: boolean;
+  onRetry?: () => void;
 }
-
-export function ContactsList({ contacts, loading, error, hasSearched = false, onRetry }: ContactsListProps) {
-  const isMobile = useIsMobile()
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-
-  const handleCardClick = (contact: Contact, event: React.MouseEvent) => {
-    // Don't open dialog if clicking on action buttons
-    const target = event.target as HTMLElement
-    if (target.closest('button') || target.closest('[role="button"]')) {
-      return
-    }
-    setSelectedContact(contact)
-    setIsDialogOpen(true)
-  }
-
-  // Show loading state
-  if (loading) {
-    if (isMobile) {
-      return (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="rounded-lg border bg-card p-3 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <Skeleton className="h-5 w-32 mb-2" />
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-16" />
-                  </div>
-                </div>
-                <Skeleton className="h-8 w-16 rounded-md" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )
-    }
+export function ContactsList({
+  contacts,
+  loading,
+  error,
+  hasSearched = false,
+  onRetry,
+}: Props) {
+  const [selected, setSelected] = useState<Contact | null>(null);
+  const { favorites } = useContactPreferences();
+  if (loading && !contacts.length)
     return (
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded-lg border bg-card p-4 shadow-sm">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <Skeleton className="h-5 w-32 flex-1" />
-              <Skeleton className="h-8 w-16 rounded-md" />
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-16" />
-            </div>
-          </div>
+      <div aria-label="Loading contacts" className="grid gap-3 lg:grid-cols-2">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className="h-36 rounded-2xl" />
         ))}
       </div>
-    )
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="rounded-lg border border-destructive bg-destructive/10 p-6 text-center">
-        <p className="text-sm font-medium text-destructive mb-4">{error}</p>
-        {onRetry && (
-          <Button
-            onClick={onRetry}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Retry
-          </Button>
-        )}
-      </div>
-    )
-  }
-
-  // Show empty state only if a search has been performed
-  if (!loading && contacts.length === 0 && hasSearched) {
-    return (
-      <div className="rounded-lg border bg-card p-12 text-center shadow-sm">
-        <ContactIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold">No contacts found</h3>
-      </div>
-    )
-  }
-
-  // Don't show anything on initial load before search
-  if (!loading && contacts.length === 0 && !hasSearched && !error) {
-    return null
-  }
-
-  // Mobile card layout
-  if (isMobile) {
-    return (
-      <>
-        <div className="space-y-2">
-          {contacts.map((contact) => (
-            <div
-              key={contact.id}
-              onClick={(e) => handleCardClick(contact, e)}
-              className="rounded-lg border bg-card p-3 shadow-sm hover:shadow-md hover:border-border/80 transition-all duration-200 cursor-pointer"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold mb-1.5 text-foreground">{contact.name}</h3>
-                  <div className="flex flex-col gap-1.5 text-sm">
-                    {contact.phone && (
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{formatPhoneNumber(contact.phone)}</span>
-                      </div>
-                    )}
-                    <div className="flex flex-wrap items-center gap-2.5 text-muted-foreground">
-                      {contact.lobby && (
-                        <div className="flex items-center gap-1.5">
-                          <Building2 className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                          <span className="text-xs">{contact.lobby}</span>
-                        </div>
-                      )}
-                      {contact.designation && (
-                        <div className="flex items-center gap-1.5">
-                          <Briefcase className="h-3.5 w-3.5 shrink-0 text-purple-500" />
-                          <span className="text-xs">{contact.designation}</span>
-                        </div>
-                      )}
-                      {contact.bloodGroup && (
-                        <div className="flex items-center gap-1.5">
-                          <HeartPulse className="h-3.5 w-3.5 shrink-0 text-red-500" />
-                          <span className="text-xs font-medium">{contact.bloodGroup}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div onClick={(e) => e.stopPropagation()}>
-                  <ContactActions
-                    phone={contact.phone || ""}
-                    contactName={contact.name}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <ContactDetailsDialog
-          contact={selectedContact}
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-        />
-      </>
-    )
-  }
-
-  // Desktop card layout
+    );
   return (
-    <>
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+    <div aria-busy={loading} className="space-y-3">
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+        >
+          <p className="text-sm">{error}</p>
+          {onRetry && (
+            <Button variant="outline" className="mt-3" onClick={onRetry}>
+              Try again
+            </Button>
+          )}
+        </div>
+      )}
+      {loading && (
+        <p role="status" className="text-sm text-muted-foreground">
+          Updating contacts…
+        </p>
+      )}
+      {!loading && !error && !contacts.length && hasSearched && (
+        <div className="rounded-2xl border border-dashed p-10 text-center">
+          <Users className="mx-auto size-8 text-muted-foreground" />
+          <h2 className="mt-3 font-semibold">No contacts found</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Try a shorter name, another phone number, or fewer filters.
+          </p>
+        </div>
+      )}
+      <div className="grid gap-3 lg:grid-cols-2">
         {contacts.map((contact) => (
-          <div
+          <article
             key={contact.id}
-            onClick={(e) => handleCardClick(contact, e)}
-            className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-md hover:border-border/80 transition-all duration-200 cursor-pointer"
+            className="rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:border-primary/40"
           >
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <h3 className="text-sm font-semibold flex-1 text-foreground">{contact.name}</h3>
-              <div onClick={(e) => e.stopPropagation()}>
-                <ContactActions
-                  phone={contact.phone || ""}
-                  contactName={contact.name}
+            <div className="flex items-start gap-2">
+              <button
+                className="min-w-0 flex-1 rounded-md text-left focus-visible:outline-2 focus-visible:outline-primary"
+                onClick={() => {
+                  recordViewed(contact.id, contact.phone);
+                  setSelected(contact);
+                }}
+                aria-label={`View ${contact.name}'s details`}
+              >
+                <h3 className="flex items-start gap-2 text-base font-semibold leading-snug">
+                  {contact.name}
+                  <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {[contact.designation, contact.lobby]
+                    .filter(Boolean)
+                    .join(" · ") || "Contact"}
+                </p>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-11 shrink-0"
+                aria-label={`${favorites.includes(contact.id) ? "Remove" : "Add"} ${contact.name} ${favorites.includes(contact.id) ? "from" : "to"} favorites`}
+                aria-pressed={favorites.includes(contact.id)}
+                onClick={() => toggleFavorite(contact.id, contact.phone)}
+              >
+                <Star
+                  className={
+                    favorites.includes(contact.id)
+                      ? "fill-primary text-primary"
+                      : "text-muted-foreground"
+                  }
                 />
-              </div>
+              </Button>
             </div>
-            <div className="flex flex-col gap-1.5 text-sm">
-              {contact.phone && (
-                <div className="flex items-center gap-1.5">
-                  <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{formatPhoneNumber(contact.phone)}</span>
-                </div>
-              )}
-              <div className="flex flex-wrap items-center gap-2.5 text-muted-foreground">
-                {contact.lobby && (
-                  <div className="flex items-center gap-1.5">
-                    <Building2 className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                    <span className="text-xs">{contact.lobby}</span>
-                  </div>
-                )}
-                {contact.designation && (
-                  <div className="flex items-center gap-1.5">
-                    <Briefcase className="h-3.5 w-3.5 shrink-0 text-purple-500" />
-                    <span className="text-xs">{contact.designation}</span>
-                  </div>
-                )}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium tabular-nums">
+                  {contact.phone || "No phone number"}
+                </p>
                 {contact.bloodGroup && (
-                  <div className="flex items-center gap-1.5">
-                    <HeartPulse className="h-3.5 w-3.5 shrink-0 text-red-500" />
-                    <span className="text-xs font-medium">{contact.bloodGroup}</span>
-                  </div>
+                  <span className="mt-1 inline-block rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    {contact.bloodGroup}
+                  </span>
                 )}
               </div>
+              <ContactActions
+                phone={contact.phone || ""}
+                contactName={contact.name}
+              />
             </div>
-          </div>
+          </article>
         ))}
       </div>
       <ContactDetailsDialog
-        contact={selectedContact}
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        key={selected?.id || "closed"}
+        contact={selected}
+        open={!!selected}
+        onOpenChange={(open) => {
+          if (!open) setSelected(null);
+        }}
       />
-    </>
-  )
+    </div>
+  );
 }
-

@@ -58,7 +58,9 @@ export function Analytics() {
   const [growthDays, setGrowthDays] = React.useState(7)
   const [visitsDays, setVisitsDays] = React.useState(7)
 
-  // Initial load - fetch all data except visits history (which depends on visitsDays)
+  const initialPeriods = React.useRef({ growthDays, visitsDays })
+
+  // Initial overview; subsequent period changes refresh only the selected chart.
   React.useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -70,9 +72,9 @@ export function Analytics() {
           analyticsService.getBloodGroupDistribution(),
           analyticsService.getLobbyDistribution(),
           analyticsService.getDesignationDistribution(),
-          analyticsService.getGrowth(growthDays),
+          analyticsService.getGrowth(initialPeriods.current.growthDays),
           analyticsService.getRecentContacts(10),
-          analyticsService.getVisitsHistory(visitsDays),
+          analyticsService.getVisitsHistory(initialPeriods.current.visitsDays),
         ])
 
         setOverview(overviewData)
@@ -349,7 +351,6 @@ interface CoverageCardProps {
 function CoverageCard({
   title,
   covered,
-  total: _total,
   percentage,
   missing,
   icon: Icon,
@@ -416,7 +417,7 @@ interface DistributionChartProps {
   title: string
   data: Array<{ count: number; percentage: string; bloodGroup?: string; lobby?: string; designation?: string }>
   total: number
-  getLabel: (item: any) => string
+  getLabel: (item: { count: number; percentage: string; bloodGroup?: string; lobby?: string; designation?: string }) => string
   icon: React.ComponentType<{ className?: string }>
   color: "red" | "blue" | "purple"
 }

@@ -7,8 +7,8 @@ describe("cn", () => {
   })
 
   it("should handle conditional classes", () => {
-    expect(cn("foo", false && "bar", "baz")).toBe("foo baz")
-    expect(cn("foo", true && "bar", "baz")).toBe("foo bar baz")
+    expect(cn("foo", false, "baz")).toBe("foo baz")
+    expect(cn("foo", "bar", "baz")).toBe("foo bar baz")
   })
 
   it("should handle undefined and null", () => {
