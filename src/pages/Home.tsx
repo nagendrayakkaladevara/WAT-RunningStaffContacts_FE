@@ -1,3 +1,4 @@
+import { m } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ContactsSearch } from "@/components/contacts/contacts-search";
@@ -72,14 +73,16 @@ export function Home() {
   }
   return (
     <div
-      className={`mx-auto w-full max-w-3xl ${query.trim() ? "space-y-8 py-10" : "flex min-h-[calc(100svh-4.5rem)] flex-col justify-center pb-20"}`}
+      className={`mx-auto w-full max-w-3xl ${query.trim() ? "space-y-5 py-4 sm:space-y-8 sm:py-8" : "flex min-h-[calc(100svh-4.5rem)] flex-col justify-center pb-20"}`}
     >
       <h1
         className={`page-heading ${query.trim() ? "sr-only" : "mb-8 text-center"}`}
       >
         Who are you looking for?
       </h1>
-      <section
+      <m.section
+        layout="position"
+        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
         aria-label="Contact search"
         className="sticky top-18 z-20 bg-background py-2"
       >
@@ -93,9 +96,14 @@ export function Home() {
             setRevision((value) => value + 1);
           }}
         />
-      </section>
+      </m.section>
       {query.trim() && (
-        <section aria-label="Search results">
+        <m.section
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          aria-label="Search results"
+        >
           <div className="mb-5 flex items-center justify-between">
             <h2 className="section-label">Search results</h2>
             {pagination && (
@@ -133,7 +141,7 @@ export function Home() {
                 />
               </div>
             )}
-        </section>
+        </m.section>
       )}
     </div>
   );

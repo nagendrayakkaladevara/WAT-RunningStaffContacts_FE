@@ -48,21 +48,36 @@ export default async function handler(request: Request): Promise<Response> {
     request.headers.get("origin") !== url.origin
   )
     return error("Origin not allowed", 403);
-  const { WAT_API_BASE_URL, WAT_API_KEY, WAT_API_USERNAME, WAT_API_PASSWORD } =
-    process.env;
-  if (
-    !WAT_API_BASE_URL ||
-    !WAT_API_KEY ||
-    !WAT_API_USERNAME ||
-    !WAT_API_PASSWORD
-  )
+  // Compatibility is server-only: existing Netlify installations may still use
+  // the previous variable names. Explicit WAT values always take precedence.
+  const WAT_API_BASE_URL =
+    process.env.WAT_API_BASE_URL ?? process.env.VITE_API_BASE_URL;
+  const WAT_API_KEY = process.env.WAT_API_KEY ?? process.env.VITE_API_KEY;
+  const WAT_API_USERNAME =
+    process.env.WAT_API_USERNAME ?? process.env.VITE_API_USERNAME;
+  const WAT_API_PASSWORD =
+    process.env.WAT_API_PASSWORD ?? process.env.VITE_API_PASSWORD;
+  const missing = Object.entries({
+    WAT_API_BASE_URL,
+    WAT_API_KEY,
+    WAT_API_USERNAME,
+    WAT_API_PASSWORD,
+  })
+    .filter(([, value]) => !value?.trim())
+    .map(([key]) => key);
+  if (missing.length) {
+    console.error(
+      "Directory gateway configuration missing:",
+      missing.join(", "),
+    );
     return error(
-      "Directory connection is not configured. Please contact the administrator.",
+      "The directory is temporarily unavailable. Please try again later.",
       503,
     );
+  }
   let upstream: URL;
   try {
-    upstream = new URL(path, WAT_API_BASE_URL);
+    upstream = new URL(path, WAT_API_BASE_URL!.trim());
     if (upstream.protocol !== "https:")
       return error("Directory connection is not configured.", 503);
   } catch {
@@ -83,7 +98,7 @@ export default async function handler(request: Request): Promise<Response> {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        "X-API-Key": WAT_API_KEY,
+        "X-API-Key": WAT_API_KEY!,
         Authorization: `Basic ${Buffer.from(`${WAT_API_USERNAME}:${WAT_API_PASSWORD}`).toString("base64")}`,
       },
       ...(visit ? { body: "{}" } : {}),
@@ -109,4 +124,11 @@ export default async function handler(request: Request): Promise<Response> {
   }
 }
 
-export const config = { rateLimit: { action: "rate_limit", aggregateBy: ["ip"], windowSize: 60, windowLimit: 180 } };
+export const config = {
+  rateLimit: {
+    action: "rate_limit",
+    aggregateBy: ["ip"],
+    windowSize: 60,
+    windowLimit: 180,
+  },
+};

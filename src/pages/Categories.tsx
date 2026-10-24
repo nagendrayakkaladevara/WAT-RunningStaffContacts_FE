@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -86,7 +87,7 @@ function FilterForm({
     >
       <div className="grid gap-4 sm:grid-cols-3">
         {fields.map((field) => (
-          <fieldset key={field}>
+          <fieldset key={field} className="min-w-0">
             <legend className="mb-2 text-sm font-semibold">
               {labels[field]}
             </legend>
@@ -123,7 +124,7 @@ function FilterForm({
           </fieldset>
         ))}
       </div>
-      <div className="flex justify-end gap-2">
+      <div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t bg-background pt-4">
         <Button type="button" variant="outline" onClick={() => setDraft(empty)}>
           Reset
         </Button>
@@ -274,7 +275,7 @@ export function Categories() {
       </div>
     );
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       <Link
         to="/categories"
         className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
@@ -282,7 +283,7 @@ export function Categories() {
         <ArrowLeft className="size-4" />
         Categories
       </Link>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="page-heading">{selected.name}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -292,6 +293,10 @@ export function Categories() {
         <Button
           variant="outline"
           className="h-11 md:hidden"
+          disabled={
+            optionsLoading ||
+            (!!optionsError && !fields.some((field) => options[field].length))
+          }
           onClick={() => setOpen(true)}
         >
           <SlidersHorizontal />
@@ -304,7 +309,7 @@ export function Categories() {
           availability.
         </p>
       )}
-      {optionsError && (
+      {optionsError && !state.error && (
         <div role="alert" className="text-sm text-destructive">
           {optionsError}
           <Button
@@ -329,13 +334,15 @@ export function Categories() {
         </div>
       </details>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="mobile-sheet max-h-[90dvh] overflow-y-auto">
-          <DialogTitle>Filter contacts</DialogTitle>
-          <DialogDescription>
-            {optionsLoading
-              ? "Loading filter options…"
-              : "Choose filters, then apply to update results."}
-          </DialogDescription>
+        <DialogContent mobileSheet className="">
+          <DialogHeader>
+            <DialogTitle>Filter contacts</DialogTitle>
+            <DialogDescription>
+              {optionsLoading
+                ? "Loading filter options…"
+                : "Choose filters, then apply to update results."}
+            </DialogDescription>
+          </DialogHeader>
           <FilterForm
             key={filterKey}
             initial={applied}
@@ -345,44 +352,51 @@ export function Categories() {
           />
         </DialogContent>
       </Dialog>
-      <div className="flex flex-wrap items-center gap-2">
-        {fields.flatMap((field) =>
-          applied[field].map((value) => (
-            <button
-              key={`${field}:${value}`}
-              className="flex min-h-10 items-center gap-2 rounded-full border bg-card px-3 text-sm"
-              onClick={() =>
-                apply({
-                  ...applied,
-                  [field]: applied[field].filter((item) => item !== value),
-                })
-              }
-              aria-label={`Remove ${labels[field]} ${value} filter`}
-            >
-              {value}
-              <X className="size-3" />
-            </button>
-          )),
-        )}
-        {fields.some((field) => applied[field].length) && (
-          <Button variant="ghost" onClick={() => apply(empty)}>
-            Clear all
-          </Button>
-        )}
-      </div>
-      <p role="status" className="text-sm text-muted-foreground">
-        {state.loading
-          ? "Updating directory…"
-          : state.pagination
-            ? `${state.pagination.total} contacts found · Name A–Z · Page ${state.pagination.page} of ${Math.max(1, state.pagination.totalPages)}`
-            : ""}
-      </p>
+      {fields.some((field) => applied[field].length) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {fields.flatMap((field) =>
+            applied[field].map((value) => (
+              <button
+                key={`${field}:${value}`}
+                className="flex min-h-10 items-center gap-2 rounded-full border bg-card px-3 text-sm"
+                onClick={() =>
+                  apply({
+                    ...applied,
+                    [field]: applied[field].filter((item) => item !== value),
+                  })
+                }
+                aria-label={`Remove ${labels[field]} ${value} filter`}
+              >
+                {value}
+                <X className="size-3" />
+              </button>
+            )),
+          )}
+          {fields.some((field) => applied[field].length) && (
+            <Button variant="ghost" onClick={() => apply(empty)}>
+              Clear all
+            </Button>
+          )}
+        </div>
+      )}
+      {(state.loading || state.pagination) && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {state.loading
+            ? "Updating directory…"
+            : state.pagination
+              ? `${state.pagination.total} contacts found · Name A–Z · Page ${state.pagination.page} of ${Math.max(1, state.pagination.totalPages)}`
+              : ""}
+        </p>
+      )}
       <ContactsList
         contacts={state.contacts}
         loading={state.loading}
         error={state.error}
         hasSearched
-        onRetry={() => setAttempt((value) => value + 1)}
+        onRetry={() => {
+          setAttempt((value) => value + 1);
+          if (optionsError) setOptionsAttempt((value) => value + 1);
+        }}
       />
       {state.pagination && state.pagination.totalPages > 1 && (
         <PaginationControls

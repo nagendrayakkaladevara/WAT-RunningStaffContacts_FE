@@ -173,14 +173,30 @@
 .mobile-nav {
   padding-bottom: env(safe-area-inset-bottom);
 }
+.dialog-positioner {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  pointer-events: none;
+}
+.dialog-panel {
+  max-height: calc(
+    100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
+}
 @media (max-width: 639px) {
-  .mobile-sheet {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+  .dialog-positioner[data-mobile-sheet] {
+    align-items: end;
+    padding: 0;
+  }
+  .dialog-positioner[data-mobile-sheet] .dialog-panel {
     max-width: none;
-    transform: none;
+    max-height: calc(100dvh - max(1rem, env(safe-area-inset-top)));
     border-radius: 0.75rem 0.75rem 0 0;
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   }
