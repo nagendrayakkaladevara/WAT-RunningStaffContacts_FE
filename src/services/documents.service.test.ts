@@ -67,9 +67,7 @@ describe("DocumentsService", () => {
           method: "GET",
           headers: expect.objectContaining({
             "Content-Type": "application/json",
-            "X-API-Key": "test-api-key",
-            Authorization: "Basic dGVzdDp0ZXN0",
-          }),
+              }),
         })
       )
     })

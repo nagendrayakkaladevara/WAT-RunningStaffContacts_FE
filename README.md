@@ -1,3 +1,5 @@
+> **Deployment change:** This branch uses a Netlify Functions gateway. Configure the four server-only `WAT_API_*` variables before deploying. See [redesign and migration notes](documentation/DIRECTORY-REDESIGN.md). Earlier VITE credential instructions below are superseded.
+
 # Contacts Management System
 
 <div align="center">

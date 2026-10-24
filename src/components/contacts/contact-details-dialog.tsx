@@ -1,162 +1,126 @@
-/**
- * ContactDetailsDialog Component
- * Displays full contact details in a dialog with copy and call actions
- */
-
-import { Phone, Building2, Briefcase, HeartPulse, Copy, Check } from "lucide-react"
+import { useState } from "react";
+import { Download, Share2, Star } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { formatPhoneNumber } from "@/lib/phone-formatter"
-import type { Contact } from "@/types/contact"
-import { useState } from "react"
-
-interface ContactDetailsDialogProps {
-  contact: Contact | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
-
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ContactActions } from "./contact-actions";
+import { contactText, downloadContact } from "@/lib/contact-sharing";
+import {
+  toggleFavorite,
+  useContactPreferences,
+} from "@/lib/contact-preferences";
+import type { Contact } from "@/types/contact";
 export function ContactDetailsDialog({
   contact,
   open,
   onOpenChange,
-}: ContactDetailsDialogProps) {
-  const [isCopied, setIsCopied] = useState(false)
-
-  if (!contact) return null
-
-  const phoneNumber = contact.phone?.replace(/\s+/g, "") || ""
-  const canCall = phoneNumber.length > 0
-
-  const handleCopyPhone = async () => {
-    if (!contact.phone) return
-    
+}: {
+  contact: Contact | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { favorites } = useContactPreferences();
+  const [feedback, setFeedback] = useState("");
+  if (!contact) return null;
+  const saved = favorites.includes(contact.id);
+  async function share() {
+    if (!contact) return;
     try {
-      await navigator.clipboard.writeText(contact.phone)
-      setIsCopied(true)
-      setTimeout(() => {
-        setIsCopied(false)
-      }, 2000)
-    } catch (err) {
-      // Fallback for older browsers
-      const textArea = document.createElement("textarea")
-      textArea.value = contact.phone
-      textArea.style.position = "fixed"
-      textArea.style.opacity = "0"
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand("copy")
-      document.body.removeChild(textArea)
-      setIsCopied(true)
-      setTimeout(() => {
-        setIsCopied(false)
-      }, 2000)
+      if (navigator.share)
+        await navigator.share({
+          title: contact.name,
+          text: contactText(contact),
+        });
+      else {
+        await navigator.clipboard.writeText(contactText(contact));
+        setFeedback("Contact copied for sharing.");
+      }
+    } catch (error) {
+      if (!(error instanceof Error && error.name === "AbortError"))
+        setFeedback("Sharing unavailable. Use Save contact instead.");
     }
   }
-
-  const handleCall = () => {
-    if (canCall) {
-      window.location.href = `tel:${phoneNumber}`
-    }
-  }
-
+  const updated = contact.updatedAt ? new Date(contact.updatedAt) : null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-md p-0 overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[90vh]">
-        {/* Header Section - Compact */}
-        <div className="px-4 pt-4 pb-3 pr-12 border-b bg-background shrink-0">
-          <DialogHeader className="space-y-0">
-            <DialogTitle className="text-xl font-bold leading-tight">{contact.name}</DialogTitle>
-          </DialogHeader>
-        </div>
-
-        {/* Content Section - Compact, No Scroll */}
-        <div className="px-4 py-3 space-y-2.5 flex-1 min-h-0 overflow-y-auto">
-          {/* Phone Number - Large and Prominent */}
-          {contact.phone && (
-            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 border-2 border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 mb-1">
-                <Phone className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
-                <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                  Phone Number
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1 break-all">
-                {formatPhoneNumber(contact.phone)}
-              </p>
-            </div>
-          )}
-
-          {/* Additional Information - Compact Grid */}
-          {(contact.lobby || contact.designation || contact.bloodGroup) && (
-            <div className="space-y-2">
-              {contact.lobby && (
-                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/40 border border-border">
-                  <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-muted-foreground mb-0.5">Lobby</div>
-                    <div className="text-base font-semibold text-foreground leading-tight break-words">{contact.lobby}</div>
-                  </div>
-                </div>
-              )}
-              {contact.designation && (
-                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/40 border border-border">
-                  <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-muted-foreground mb-0.5">Designation</div>
-                    <div className="text-base font-semibold text-foreground leading-tight break-words">{contact.designation}</div>
-                  </div>
-                </div>
-              )}
-              {contact.bloodGroup && (
-                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/40 border border-border">
-                  <HeartPulse className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-muted-foreground mb-0.5">Blood Group</div>
-                    <div className="text-base font-semibold text-foreground leading-tight">{contact.bloodGroup}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons - Large Touch Targets */}
-        {contact.phone && (
-          <div className="px-4 py-3 border-t bg-muted/30 flex gap-2.5 shrink-0">
-            <Button
-              variant="outline"
-              className="flex-1 gap-2 h-12 text-base font-semibold border-2"
-              onClick={handleCopyPhone}
-            >
-              {isCopied ? (
-                <>
-                  <Check className="h-5 w-5" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-5 w-5" />
-                  Copy
-                </>
-              )}
-            </Button>
-            <Button
-              className="flex-1 gap-2 h-12 text-base font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-              onClick={handleCall}
-              disabled={!canCall}
-            >
-              <Phone className="h-5 w-5" />
-              Call
-            </Button>
+      <DialogContent className="mobile-sheet max-h-[90dvh] overflow-y-auto sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle className="text-2xl leading-tight">
+            {contact.name}
+          </DialogTitle>
+          <DialogDescription>
+            {[contact.designation, contact.lobby].filter(Boolean).join(" · ") ||
+              "Contact details"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="rounded-xl bg-card p-5">
+          <p className="section-label">PHONE NUMBER</p>
+          <p className="mt-1 break-all text-2xl font-medium tracking-tight">
+            {contact.phone || "Not available"}
+          </p>
+          <div className="mt-4">
+            <ContactActions
+              phone={contact.phone || ""}
+              contactName={contact.name}
+            />
           </div>
+        </div>
+        <dl className="space-y-3">
+          {[
+            ["Lobby", contact.lobby],
+            ["Designation", contact.designation],
+            ["Blood group", contact.bloodGroup],
+            ["Address", contact.address],
+            ["Notes", contact.notes],
+          ]
+            .filter(([, value]) => value)
+            .map(([label, value]) => (
+              <div key={label} className="border-b pb-3">
+                <dt className="text-xs text-muted-foreground">{label}</dt>
+                <dd className="mt-1 whitespace-pre-wrap break-words text-sm">
+                  {value}
+                </dd>
+              </div>
+            ))}
+        </dl>
+        {updated && !Number.isNaN(updated.getTime()) && (
+          <p className="text-xs text-muted-foreground">
+            Record updated {updated.toLocaleDateString()}. This does not
+            indicate verification.
+          </p>
         )}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="h-11"
+            aria-pressed={saved}
+            onClick={() => toggleFavorite(contact.id, contact.phone)}
+          >
+            <Star className={saved ? "fill-current" : ""} />
+            {saved ? "Saved" : "Favorite"}
+          </Button>
+          <Button variant="outline" className="h-11" onClick={share}>
+            <Share2 />
+            Share
+          </Button>
+          <Button
+            variant="outline"
+            className="h-11"
+            onClick={() => downloadContact(contact)}
+          >
+            <Download />
+            Save contact
+          </Button>
+        </div>
+        <p role="status" className="text-sm text-muted-foreground">
+          {feedback}
+        </p>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

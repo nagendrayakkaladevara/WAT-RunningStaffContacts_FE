@@ -1,11 +1,11 @@
-import "@testing-library/jest-dom"
-import { expect, afterEach, vi } from "vitest"
-import { cleanup } from "@testing-library/react"
+import "@testing-library/jest-dom";
+import { afterEach, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
 
 // Cleanup after each test
 afterEach(() => {
-  cleanup()
-})
+  cleanup();
+});
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
@@ -20,13 +20,13 @@ Object.defineProperty(window, "matchMedia", {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
-})
+});
 
 // Mock AbortController
-global.AbortController = AbortController
+global.AbortController = AbortController;
 
 // Mock fetch globally
-global.fetch = vi.fn()
+global.fetch = vi.fn();
 
 // Mock console methods to reduce noise in tests
 global.console = {
@@ -36,5 +36,17 @@ global.console = {
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
-}
+};
 
+// JSDOM does not implement the scrolling/pointer APIs used by Radix Select.
+HTMLElement.prototype.scrollIntoView = vi.fn();
+HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+HTMLElement.prototype.setPointerCapture = vi.fn();
+HTMLElement.prototype.releasePointerCapture = vi.fn();
+
+class ResizeObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+vi.stubGlobal("ResizeObserver", ResizeObserverMock);

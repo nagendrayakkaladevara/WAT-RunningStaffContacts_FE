@@ -1,205 +1,140 @@
-import { useState, useCallback, useRef, useEffect } from "react"
-import { useContactsSearch } from "@/hooks/use-contacts-search"
-import { useVisitCount } from "@/hooks/use-visit-count"
-import { ContactsSearch } from "@/components/contacts/contacts-search"
-import { ContactsList } from "@/components/contacts/contacts-list"
-import { PaginationControls } from "@/components/contacts/pagination-controls"
-import { DocumentsList } from "@/components/documents/documents-list"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Phone, FileText } from "lucide-react"
-import logo from "@/assets/indian-railways-logo-Bn6xvMdg-removebg-preview.png"
-
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { ContactsSearch } from "@/components/contacts/contacts-search";
+import { isPhoneQuery, type SearchMode } from "@/lib/contact-search";
+import { ContactsList } from "@/components/contacts/contacts-list";
+import { PaginationControls } from "@/components/contacts/pagination-controls";
+import { useContactsSearch } from "@/hooks/use-contacts-search";
 export function Home() {
-    const [lastQuery, setLastQuery] = useState("")
-    const [isPhoneSearch, setIsPhoneSearch] = useState(false)
-    const [hasSearched, setHasSearched] = useState(false)
-    const {
-        contacts,
-        loading,
-        error,
-        pagination,
-        searchByName,
-        searchByPhone,
-        clearResults,
-    } = useContactsSearch()
-    
-    // Get visit count (don't auto-increment since App.tsx already handles it)
-    const { visitCount } = useVisitCount(false, true)
-    
-    // Track if a search is in progress to prevent race conditions
-    const isSearchingRef = useRef(false)
-
-    const handleSearch = useCallback(async (query: string, isPhone: boolean) => {
-        // Prevent concurrent searches
-        if (isSearchingRef.current) {
-            return
-        }
-
-        const trimmedQuery = query.trim()
-        
-        if (!trimmedQuery) {
-            // Clear search results when query is empty or whitespace-only
-            setHasSearched(false)
-            setLastQuery("")
-            clearResults()
-            return
-        }
-
-        // Skip if this is the same query we're already searching/displaying
-        if (trimmedQuery === lastQuery && hasSearched) {
-            return
-        }
-
-        try {
-            isSearchingRef.current = true
-            setLastQuery(trimmedQuery)
-            setIsPhoneSearch(isPhone)
-            setHasSearched(true)
-            
-            if (isPhone) {
-                await searchByPhone(trimmedQuery)
-            } else {
-                await searchByName(trimmedQuery, 1)
-            }
-        } catch (err) {
-            // Error is handled by the hook
-            console.error("Search error:", err)
-        } finally {
-            isSearchingRef.current = false
-        }
-    }, [lastQuery, hasSearched, searchByName, searchByPhone, clearResults])
-
-    const handlePageChange = async (page: number) => {
-        if (lastQuery && !isPhoneSearch) {
-            await searchByName(lastQuery, page)
-        }
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") || "";
+  const mode: SearchMode =
+    params.get("mode") === "name"
+      ? "name"
+      : params.get("mode") === "phone"
+        ? "phone"
+        : "auto";
+  const page = Math.max(1, Number(params.get("page")) || 1);
+  const [revision, setRevision] = useState(0);
+  const immediate = useRef(false);
+  const [submittedKey, setSubmittedKey] = useState("");
+  const searchKey = JSON.stringify([query, mode, page, revision]);
+  const {
+    contacts,
+    loading,
+    error,
+    pagination,
+    searchByName,
+    searchByPhone,
+    clearResults,
+  } = useContactsSearch();
+  const busy = !!query.trim() && (loading || submittedKey !== searchKey);
+  useEffect(() => {
+    if (!query.trim()) {
+      clearResults();
+      return;
     }
-
-    // Scroll to top when page changes and content is loaded
-    useEffect(() => {
-        if (pagination && pagination.page && !loading) {
-            // Use setTimeout to ensure DOM is updated after content loads
-            const timer = setTimeout(() => {
-                const contactsContainer = document.querySelector('[data-contacts-list]')
-                if (contactsContainer) {
-                    const elementPosition = contactsContainer.getBoundingClientRect().top + window.pageYOffset
-                    const offsetPosition = elementPosition - 10 // 10px above the element
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
-                    })
-                } else {
-                    // Fallback: scroll to top of page
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                }
-            }, 150)
-            
-            return () => clearTimeout(timer)
-        }
-    }, [pagination?.page, loading])
-
-    const handleRetry = useCallback(async () => {
-        if (!lastQuery) {
-            return
-        }
-
-        // Prevent concurrent searches
-        if (isSearchingRef.current) {
-            return
-        }
-
-        try {
-            isSearchingRef.current = true
-            // Directly call the search functions without going through handleSearch
-            // This bypasses the duplicate check that prevents retries
-            if (isPhoneSearch) {
-                await searchByPhone(lastQuery)
-            } else {
-                await searchByName(lastQuery, 1)
-            }
-        } catch (err) {
-            // Error is handled by the hook
-            console.error("Retry error:", err)
-        } finally {
-            isSearchingRef.current = false
-        }
-    }, [lastQuery, isPhoneSearch, searchByName, searchByPhone])
-
-    return (
-        <div className="flex flex-col gap-6 pb-16 md:pb-0">
-            {/* Welcome Section with Logo */}
-            <div className="flex flex-col items-center gap-4 my-4">
-                <img 
-                    src={logo} 
-                    alt="Indian Railways Logo" 
-                    className="h-20 w-auto object-contain"
+    const timer = setTimeout(
+      () => {
+        setSubmittedKey(searchKey);
+        if (isPhoneQuery(query, mode)) void searchByPhone(query.trim());
+        else void searchByName(query.trim(), page);
+      },
+      immediate.current ? 0 : 400,
+    );
+    immediate.current = false;
+    return () => {
+      clearTimeout(timer);
+      clearResults();
+    };
+  }, [
+    query,
+    mode,
+    page,
+    revision,
+    searchKey,
+    searchByName,
+    searchByPhone,
+    clearResults,
+  ]);
+  function change(value: string, nextMode: SearchMode) {
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        if (value) next.set("q", value);
+        else next.delete("q");
+        next.set("mode", nextMode);
+        next.delete("page");
+        return next;
+      },
+      { replace: true },
+    );
+  }
+  return (
+    <div
+      className={`mx-auto w-full max-w-3xl ${query.trim() ? "space-y-8 py-10" : "flex min-h-[calc(100svh-4.5rem)] flex-col justify-center pb-20"}`}
+    >
+      <h1
+        className={`page-heading ${query.trim() ? "sr-only" : "mb-8 text-center"}`}
+      >
+        Who are you looking for?
+      </h1>
+      <section
+        aria-label="Contact search"
+        className="sticky top-18 z-20 bg-background py-2"
+      >
+        <ContactsSearch
+          query={query}
+          mode={mode}
+          loading={busy}
+          onChange={change}
+          onSubmit={() => {
+            immediate.current = true;
+            setRevision((value) => value + 1);
+          }}
+        />
+      </section>
+      {query.trim() && (
+        <section aria-label="Search results">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="section-label">Search results</h2>
+            {pagination && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {pagination.total} contacts found
+              </p>
+            )}
+          </div>
+          <ContactsList
+            contacts={contacts}
+            loading={busy}
+            error={error}
+            hasSearched
+            onRetry={() => {
+              immediate.current = true;
+              setRevision((value) => value + 1);
+            }}
+          />
+          {pagination &&
+            pagination.totalPages > 1 &&
+            !isPhoneQuery(query, mode) && (
+              <div className="mt-5">
+                <PaginationControls
+                  page={pagination.page}
+                  totalPages={pagination.totalPages}
+                  loading={busy}
+                  onPageChange={(value) => {
+                    immediate.current = true;
+                    setParams((previous) => {
+                      const next = new URLSearchParams(previous);
+                      next.set("page", String(value));
+                      return next;
+                    });
+                  }}
                 />
-                <div className="flex flex-col gap-2 text-center">
-                    <h1 className="text-xl font-bold tracking-tight">East Coast Railway, Waltair Division.</h1>
-                    <p className="text-sm text-gray-500">Contacts - Running staff, Stations, Hotels, etc.</p>
-                </div>
-            </div>
-
-            {/* Tabs Component */}
-            <Tabs defaultValue="contacts" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="contacts" className="flex items-center gap-2 border-gray-200 rounded-md">
-                        <Phone className="h-4 w-4" />
-                        Contacts
-                    </TabsTrigger>
-                    <TabsTrigger value="documents" className="flex items-center gap-2 border-gray-200 rounded-md">
-                        <FileText className="h-4 w-4" />
-                        Imp Documents
-                    </TabsTrigger>
-                </TabsList>
-
-                {/* Contacts Tab */}
-                <TabsContent value="contacts" className="mt-6">
-                    <div className="flex flex-col gap-6">
-                        {/* Search Section */}
-                        <ContactsSearch onSearch={handleSearch} loading={loading} />
-
-                        {/* Search Results */}
-                        {(hasSearched || loading || error || contacts.length > 0) && (
-                            <div className="p-0.5 mt-4" data-contacts-list>
-                                <ContactsList
-                                    contacts={contacts}
-                                    loading={loading}
-                                    error={error}
-                                    hasSearched={hasSearched}
-                                    onRetry={handleRetry}
-                                />
-                            </div>
-                        )}
-                        {pagination && pagination.totalPages > 1 && (
-                            <div className="border-t p-6">
-                                <PaginationControls
-                                    page={pagination.page}
-                                    totalPages={pagination.totalPages}
-                                    onPageChange={handlePageChange}
-                                    loading={loading}
-                                />
-                            </div>
-                        )}
-                    </div>
-                </TabsContent>
-
-                {/* Documents Tab */}
-                <TabsContent value="documents" className="mt-6">
-                    <DocumentsList />
-                </TabsContent>
-            </Tabs>
-
-            {/* Developer Credit - Mobile Only - Fixed at bottom of screen */}
-            <div className="block md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-2 px-4 z-10">
-                <p className="text-xs text-center text-gray-500">
-                    Developed by Nagendra Yakkaladevara |
-                    {visitCount !== null && (
-                        <span className="font-bold ml-1">Usage count : {visitCount.toLocaleString()}</span>
-                    )}
-                </p>
-            </div>
-        </div>
-    )
+              </div>
+            )}
+        </section>
+      )}
+    </div>
+  );
 }
-

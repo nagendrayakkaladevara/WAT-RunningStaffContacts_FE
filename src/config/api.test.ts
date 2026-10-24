@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest"
 import {
   API_BASE_URL,
-  API_KEY,
-  API_USERNAME,
-  API_PASSWORD,
-  getBasicAuthHeader,
   API_ENDPOINTS,
   DEFAULT_PAGINATION,
 } from "./api"
@@ -13,35 +9,6 @@ describe("API Configuration", () => {
   it("should export API_BASE_URL", () => {
     expect(API_BASE_URL).toBeDefined()
     expect(typeof API_BASE_URL).toBe("string")
-  })
-
-  it("should export API_KEY", () => {
-    expect(API_KEY).toBeDefined()
-    expect(typeof API_KEY).toBe("string")
-  })
-
-  it("should export API_USERNAME", () => {
-    expect(API_USERNAME).toBeDefined()
-    expect(typeof API_USERNAME).toBe("string")
-  })
-
-  it("should export API_PASSWORD", () => {
-    expect(API_PASSWORD).toBeDefined()
-    expect(typeof API_PASSWORD).toBe("string")
-  })
-
-  describe("getBasicAuthHeader", () => {
-    it("should return Basic Auth header when credentials are provided", () => {
-      // Mock the function to test its logic
-      // Since we can't easily change env vars in tests, we test the function logic
-      const header = getBasicAuthHeader()
-      // The function will return empty string if credentials are not set
-      // or a Basic auth header if they are set
-      expect(typeof header).toBe("string")
-      if (header) {
-        expect(header).toContain("Basic ")
-      }
-    })
   })
 
   describe("API_ENDPOINTS", () => {

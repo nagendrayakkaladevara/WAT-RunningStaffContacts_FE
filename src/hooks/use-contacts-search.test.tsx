@@ -3,7 +3,6 @@ import { renderHook, waitFor } from "@testing-library/react"
 import { useContactsSearch } from "./use-contacts-search"
 import { contactsService } from "@/services/contacts.service"
 import { ApiError } from "@/lib/api-client"
-import { z } from "zod"
 
 vi.mock("@/services/contacts.service")
 
@@ -50,7 +49,7 @@ describe("useContactsSearch", () => {
       })
       expect(result.current.pagination).toEqual(mockResponse.pagination)
       expect(result.current.error).toBeNull()
-      expect(mockContactsService.searchByName).toHaveBeenCalledWith("John", 1, 50)
+      expect(mockContactsService.searchByName).toHaveBeenCalledWith("John", 1, 50, expect.any(AbortSignal))
     })
 
     it("should search with custom page", async () => {
@@ -75,7 +74,7 @@ describe("useContactsSearch", () => {
         expect(result.current.loading).toBe(false)
       })
 
-      expect(mockContactsService.searchByName).toHaveBeenCalledWith("John", 2, 50)
+      expect(mockContactsService.searchByName).toHaveBeenCalledWith("John", 2, 50, expect.any(AbortSignal))
     })
 
     it("should handle validation errors", async () => {
@@ -216,7 +215,7 @@ describe("useContactsSearch", () => {
       })
       expect(result.current.pagination).toEqual(mockResponse.pagination)
       expect(result.current.error).toBeNull()
-      expect(mockContactsService.searchByPhone).toHaveBeenCalledWith("1234567890")
+      expect(mockContactsService.searchByPhone).toHaveBeenCalledWith("1234567890", expect.any(AbortSignal))
     })
 
     it("should handle validation errors", async () => {

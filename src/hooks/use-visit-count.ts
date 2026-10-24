@@ -58,18 +58,15 @@ export function useVisitCount(
           ? err.message
           : "Failed to increment visit count. Please try again."
       setError(errorMessage)
-      // Don't set loading to false on increment error, allow fetch to complete
+      setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     const initialize = async () => {
       if (autoIncrement) {
-        // Increment first, then fetch to get updated count
+        // Increment already returns the authoritative updated count.
         await incrementCount()
-        // Always fetch after increment to ensure we have the latest count
-        // and to clear loading state if increment failed
-        await fetchCount()
       } else if (autoFetch) {
         // Just fetch without incrementing
         await fetchCount()

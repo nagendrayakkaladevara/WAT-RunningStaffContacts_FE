@@ -3,7 +3,7 @@
  * Custom React hook for searching contacts by name or phone
  */
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { contactsService } from "@/services/contacts.service"
 import type { Contact, PaginatedContactsResponse } from "@/types/contact"
 import { ApiError } from "@/lib/api-client"
@@ -54,10 +54,15 @@ export function useContactsSearch(): UseContactsSearchReturn {
   
   // Track the latest search request to handle race conditions
   const searchRequestIdRef = useRef(0)
+  const controllerRef = useRef<AbortController | null>(null)
+  useEffect(() => () => { ++searchRequestIdRef.current; controllerRef.current?.abort() }, [])
 
   const searchByName = useCallback(async (query: string, page: number = 1) => {
     // Increment request ID for this search
     const currentRequestId = ++searchRequestIdRef.current
+    controllerRef.current?.abort()
+    const controller = new AbortController()
+    controllerRef.current = controller
     
     setLoading(true)
     setError(null)
@@ -67,7 +72,7 @@ export function useContactsSearch(): UseContactsSearchReturn {
       const validated = nameSearchSchema.parse({ query })
       
       const response: PaginatedContactsResponse =
-        await contactsService.searchByName(validated.query, page, 50)
+        await contactsService.searchByName(validated.query, page, 50, controller.signal)
 
       // Only update state if this is still the latest request (handle race conditions)
       if (currentRequestId === searchRequestIdRef.current) {
@@ -103,6 +108,9 @@ export function useContactsSearch(): UseContactsSearchReturn {
   const searchByPhone = useCallback(async (phone: string) => {
     // Increment request ID for this search
     const currentRequestId = ++searchRequestIdRef.current
+    controllerRef.current?.abort()
+    const controller = new AbortController()
+    controllerRef.current = controller
     
     setLoading(true)
     setError(null)
@@ -111,7 +119,7 @@ export function useContactsSearch(): UseContactsSearchReturn {
       // Validate input with Zod
       const validated = phoneSearchSchema.parse({ phone })
       
-      const response: PaginatedContactsResponse = await contactsService.searchByPhone(validated.phone)
+      const response: PaginatedContactsResponse = await contactsService.searchByPhone(validated.phone, controller.signal)
 
       // Only update state if this is still the latest request (handle race conditions)
       if (currentRequestId === searchRequestIdRef.current) {
@@ -149,6 +157,9 @@ export function useContactsSearch(): UseContactsSearchReturn {
   }, [])
 
   const clearResults = useCallback(() => {
+    ++searchRequestIdRef.current
+    controllerRef.current?.abort()
+    setLoading(false)
     setContacts([])
     setError(null)
     setPagination(null)

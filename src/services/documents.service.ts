@@ -4,7 +4,7 @@
  */
 
 import type { Document } from "@/types/document"
-import { API_BASE_URL, API_KEY, API_ENDPOINTS, getBasicAuthHeader } from "@/config/api"
+import { API_BASE_URL, API_ENDPOINTS } from "@/config/api"
 
 /**
  * Documents Service Class
@@ -22,15 +22,6 @@ export class DocumentsService {
       // Build headers with X-API-Key and Basic Auth
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
-      }
-      
-      if (API_KEY && API_KEY.trim() !== "") {
-        headers["X-API-Key"] = API_KEY
-      }
-      
-      const basicAuth = getBasicAuthHeader()
-      if (basicAuth) {
-        headers["Authorization"] = basicAuth
       }
       
       const url = `${API_BASE_URL}${API_ENDPOINTS.documents.getAll}`
@@ -51,7 +42,7 @@ export class DocumentsService {
       // Handle wrapped response format: { success: true, data: [...], count: number }
       if (responseData && typeof responseData === "object" && "data" in responseData) {
         const documents = (Array.isArray(responseData.data) ? responseData.data : [])
-          .map((doc: any) => ({
+          .map((doc: Partial<Document>) => ({
             id: doc.id || "",
             title: doc.title || "",
             link: doc.link || "",
@@ -64,7 +55,7 @@ export class DocumentsService {
 
       // Fallback: handle direct array response
       const documents = (Array.isArray(responseData) ? responseData : [])
-        .map((doc: any) => ({
+        .map((doc: Partial<Document>) => ({
           id: doc.id || "",
           title: doc.title || "",
           link: doc.link || "",
@@ -94,15 +85,6 @@ export class DocumentsService {
       // Build headers with X-API-Key and Basic Auth
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
-      }
-      
-      if (API_KEY && API_KEY.trim() !== "") {
-        headers["X-API-Key"] = API_KEY
-      }
-      
-      const basicAuth = getBasicAuthHeader()
-      if (basicAuth) {
-        headers["Authorization"] = basicAuth
       }
       
       const url = `${API_BASE_URL}${API_ENDPOINTS.documents.count}`
