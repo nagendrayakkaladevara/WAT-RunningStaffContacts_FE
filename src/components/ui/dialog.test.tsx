@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
@@ -33,4 +34,28 @@ describe("Responsive dialog behavior", () => {
     );
     await waitFor(() => expect(trigger).toHaveFocus());
   });
+});
+
+function ControlledDialog() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>View contact</button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent mobileSheet>
+          <DialogTitle>Contact</DialogTitle>
+          <DialogDescription>Details</DialogDescription>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+it("restores focus for programmatically opened contact/filter dialogs", async () => {
+  render(<ControlledDialog />);
+  const opener = screen.getByRole("button", { name: "View contact" });
+  opener.focus();
+  fireEvent.click(opener);
+  await screen.findByRole("dialog", { name: "Contact" });
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  await waitFor(() => expect(opener).toHaveFocus());
 });
