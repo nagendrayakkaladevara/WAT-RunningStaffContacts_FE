@@ -106,7 +106,7 @@ export function ContactsSearch({
           event.preventDefault();
           onSubmit();
         }}
-        className="rounded-xl border border-[var(--border-hover)] bg-card p-3 sm:p-4"
+        className="search-composer rounded-xl border border-transparent bg-card p-3 transition-colors sm:p-4"
       >
         <div className="relative min-w-0">
           <label htmlFor="contact-search" className="sr-only">
@@ -118,7 +118,7 @@ export function ContactsSearch({
             onChange={(event) => onChange(event.target.value, mode)}
             placeholder="Search a name or phone"
             inputMode={mode === "phone" ? "tel" : "search"}
-            className="h-14 border-0 bg-transparent px-2 pr-12 text-base shadow-none dark:bg-transparent"
+            className="h-14 border-0 focus-visible:ring-0 focus-visible:outline-none bg-transparent px-2 pr-12 text-base shadow-none dark:bg-transparent"
             autoComplete="off"
           />
           {query && (

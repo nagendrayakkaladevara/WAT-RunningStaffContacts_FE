@@ -210,3 +210,27 @@
     scroll-behavior: auto !important;
   }
 }
+
+.search-composer:has(#contact-search:focus) {
+  border-color: var(--ring);
+}
+.blood-group-tile {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+.blood-group-tile:hover {
+  background: #ffe4e6;
+}
+.blood-group-tile svg {
+  color: #be123c;
+}
+.dark .blood-group-tile {
+  background: #381d25;
+  border-color: #6b303f;
+}
+.dark .blood-group-tile:hover {
+  background: #482330;
+}
+.dark .blood-group-tile svg {
+  color: #fda4af;
+}

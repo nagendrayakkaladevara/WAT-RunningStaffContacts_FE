@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Share2, Star } from "lucide-react";
 import {
   Dialog,
@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { createContactCard, downloadContactCard } from "@/lib/contact-card";
 import { ContactActions } from "./contact-actions";
 import { contactText, downloadContact } from "@/lib/contact-sharing";
 import {
@@ -26,25 +27,62 @@ export function ContactDetailsDialog({
 }) {
   const { favorites } = useContactPreferences();
   const [feedback, setFeedback] = useState("");
+  const [card, setCard] = useState<{
+    contact: Contact;
+    file: File | null;
+  } | null>(null);
+  const [sharing, setSharing] = useState(false);
+  useEffect(() => {
+    if (!open || !contact) return;
+    let active = true;
+    void createContactCard(contact)
+      .then((file) => {
+        if (active) setCard({ contact, file });
+      })
+      .catch(() => {
+        if (active) {
+          setCard({ contact, file: null });
+          setFeedback(
+            "Image unavailable. You can still share the contact text.",
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [contact, open]);
   if (!contact) return null;
+  const image = card?.contact === contact ? card.file : null;
   const saved = favorites.includes(contact.id);
   async function share() {
     if (!contact) return;
+    setSharing(true);
+    setFeedback("");
     try {
-      if (navigator.share)
-        await navigator.share({
-          title: contact.name,
-          text: contactText(contact),
-        });
-      else {
-        await navigator.clipboard.writeText(contactText(contact));
-        setFeedback("Contact copied for sharing.");
+      const data = { title: contact.name, text: contactText(contact) };
+      if (image && navigator.canShare?.({ files: [image] })) {
+        await navigator.share({ ...data, files: [image] });
+      } else if (navigator.share) {
+        await navigator.share(data);
+        setFeedback(
+          "Text shared. Use Save image to send the PNG card separately.",
+        );
+      } else {
+        await navigator.clipboard.writeText(data.text);
+        setFeedback(
+          "Contact text copied. Use Save image to download the PNG card.",
+        );
       }
     } catch (error) {
-      if (!(error instanceof Error && error.name === "AbortError"))
-        setFeedback("Sharing unavailable. Use Save contact instead.");
+      if (!(typeof error === "object" && error !== null && "name" in error && error.name === "AbortError"))
+        setFeedback(
+          "Sharing unavailable. Use Save image or copy the phone number instead.",
+        );
+    } finally {
+      setSharing(false);
     }
   }
+
   const updated = contact.updatedAt ? new Date(contact.updatedAt) : null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -104,9 +142,18 @@ export function ContactDetailsDialog({
             <Star className={saved ? "fill-current" : ""} />
             {saved ? "Saved" : "Favorite"}
           </Button>
-          <Button variant="outline" className="h-11" onClick={share}>
+          <Button
+            variant="outline"
+            className="h-11"
+            onClick={share}
+            disabled={sharing || card?.contact !== contact}
+          >
             <Share2 />
-            Share
+            {sharing
+              ? "Sharing…"
+              : card?.contact !== contact
+                ? "Preparing image…"
+                : "Share"}
           </Button>
           <Button
             variant="outline"
@@ -116,6 +163,16 @@ export function ContactDetailsDialog({
             <Download />
             Save contact
           </Button>
+          {image && (
+            <Button
+              variant="ghost"
+              className="h-11"
+              onClick={() => downloadContactCard(image)}
+            >
+              <Download />
+              Save image
+            </Button>
+          )}
         </div>
         <p role="status" className="text-sm text-muted-foreground">
           {feedback}
