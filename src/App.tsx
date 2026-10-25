@@ -12,7 +12,7 @@ import {
   Users,
   Grid2X2,
   Star,
-  MoreHorizontal,
+  HeartPulse,
   Menu,
   TrainFront,
   FileText,
@@ -56,13 +56,11 @@ const More = lazy(() =>
 );
 const navigation = [
   { to: "/", label: "Contacts", icon: Users },
-  { to: "/categories", label: "Categories", icon: Grid2X2 },
-  { to: "/favorites", label: "Favorites", icon: Star },
-  { to: "/more", label: "More", icon: MoreHorizontal },
-];
-const secondary = [
   { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/categories", label: "Categories", icon: Grid2X2 },
   { to: "/analytics", label: "Analytics", icon: ChartNoAxesCombined },
+  { to: "/favorites", label: "Favourite", icon: Star },
+  { to: "/blood-groups", label: "Blood group", icon: HeartPulse },
   { to: "/about", label: "About", icon: Info },
 ];
 let tracked = false;
@@ -122,7 +120,7 @@ function Shell() {
           </Link>
           <nav
             aria-label="Main navigation"
-            className={isHome ? "hidden" : "hidden items-center gap-1 md:flex"}
+            className={isHome ? "hidden" : "hidden items-center gap-1 xl:flex"}
           >
             {navigation.map(({ to, label }) => (
               <NavLink
@@ -131,7 +129,7 @@ function Shell() {
                 to={destination(to)}
                 onClick={remember}
                 className={({ isActive }) =>
-                  `relative flex min-h-11 items-center px-5 text-sm transition-colors ${isActive || (to === "/more" && secondary.some((item) => item.to === location.pathname)) ? "font-medium text-foreground after:absolute after:inset-x-5 after:bottom-0 after:h-px after:bg-foreground" : "text-muted-foreground hover:text-foreground"}`
+                  `relative flex min-h-11 items-center px-2 text-sm transition-colors ${isActive ? "font-medium text-foreground after:absolute after:inset-x-2 after:bottom-0 after:h-px after:bg-foreground" : "text-muted-foreground hover:text-foreground"}`
                 }
               >
                 {label}
@@ -140,7 +138,7 @@ function Shell() {
           </nav>
           <div className="flex items-center gap-1">
             <ThemeToggle />
-            <div className={isHome ? "" : "md:hidden"}>
+            <div className={isHome ? "" : "xl:hidden"}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -157,26 +155,24 @@ function Shell() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 rounded-xl">
-                  {[...navigation, ...secondary].map(
-                    ({ to, label, icon: Icon }) => (
-                      <DropdownMenuItem
-                        asChild
-                        key={to}
-                        className="min-h-11 rounded-lg"
+                  {navigation.map(({ to, label, icon: Icon }) => (
+                    <DropdownMenuItem
+                      asChild
+                      key={to}
+                      className="min-h-11 rounded-lg"
+                    >
+                      <Link
+                        to={destination(to)}
+                        onClick={remember}
+                        aria-current={
+                          location.pathname === to ? "page" : undefined
+                        }
                       >
-                        <Link
-                          to={destination(to)}
-                          onClick={remember}
-                          aria-current={
-                            location.pathname === to ? "page" : undefined
-                          }
-                        >
-                          <Icon aria-hidden="true" />
-                          {label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ),
-                  )}
+                        <Icon aria-hidden="true" />
+                        {label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -186,7 +182,7 @@ function Shell() {
       <div>
         <main
           id="main-content"
-          className={`mx-auto max-w-[1120px] px-6 ${isHome ? "" : "pb-28 pt-6 sm:pt-12 md:pb-16"}`}
+          className={`mx-auto max-w-[1120px] px-6 ${isHome ? "" : "pb-28 pt-6 sm:pt-12 xl:pb-16"}`}
         >
           <Suspense
             fallback={
@@ -229,7 +225,7 @@ function Shell() {
           </Suspense>
         </main>
         {!isHome && (
-          <footer className="mx-auto hidden max-w-[1120px] items-center justify-between gap-4 border-t px-6 py-8 text-xs text-muted-foreground md:flex">
+          <footer className="mx-auto hidden max-w-[1120px] items-center justify-between gap-4 border-t px-6 py-8 text-xs text-muted-foreground xl:flex">
             <span>East Coast Railway · Waltair Division</span>
             <Link to="/about" className="py-3 hover:text-foreground">
               Made by Nagendra Yakkaladevara
@@ -240,16 +236,16 @@ function Shell() {
       {!isHome && (
         <nav
           aria-label="Mobile navigation"
-          className="mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-background md:hidden"
+          className="mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t bg-background xl:hidden"
         >
-          {navigation.map(({ to, label, icon: Icon }) => (
+          {navigation.slice(0, 4).map(({ to, label, icon: Icon }) => (
             <NavLink
               end={to === "/"}
               key={to}
               to={destination(to)}
               onClick={remember}
               className={({ isActive }) =>
-                `flex min-h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium ${isActive || (to === "/more" && secondary.some((item) => item.to === location.pathname)) ? "text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground"}`
+                `flex min-h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium ${isActive ? "text-foreground underline decoration-1 underline-offset-4" : "text-muted-foreground"}`
               }
             >
               <Icon aria-hidden="true" className="size-5" strokeWidth={1.5} />

@@ -26,6 +26,12 @@ import {
 import type { Contact, PaginationMeta } from "@/types/contact";
 const categories = [
   {
+    id: "blood-group",
+    name: "Blood groups",
+    description: "Find contacts by recorded blood group",
+    icon: HeartPulse,
+  },
+  {
     id: "all-contacts",
     name: "All contacts",
     description: "Browse the full directory",
@@ -48,12 +54,6 @@ const categories = [
     name: "Hotels",
     description: "Places along your route",
     icon: Hotel,
-  },
-  {
-    id: "blood-group",
-    name: "Blood groups",
-    description: "Find contacts by recorded blood group",
-    icon: HeartPulse,
   },
 ];
 type Filters = { lobby: string[]; designation: string[]; bloodGroup: string[] };
@@ -258,7 +258,9 @@ export function Categories() {
               to={`/categories?category=${id}`}
               className="rounded-xl"
             >
-              <Card className="directory-tile gap-0">
+              <Card
+                className={`directory-tile gap-0 ${id === "blood-group" ? "blood-group-tile" : ""}`}
+              >
                 <Icon
                   aria-hidden="true"
                   strokeWidth={1.5}
