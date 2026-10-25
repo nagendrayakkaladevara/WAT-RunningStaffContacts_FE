@@ -1,3 +1,4 @@
+import { MotionConfig, LazyMotion, domMax, m } from "motion/react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter,
@@ -185,7 +186,7 @@ function Shell() {
       <div>
         <main
           id="main-content"
-          className={`mx-auto max-w-[1120px] px-6 ${isHome ? "" : "pb-32 pt-10 sm:pt-14 md:pb-16"}`}
+          className={`mx-auto max-w-[1120px] px-6 ${isHome ? "" : "pb-28 pt-6 sm:pt-12 md:pb-16"}`}
         >
           <Suspense
             fallback={
@@ -197,27 +198,34 @@ function Shell() {
               </p>
             }
           >
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/documents" element={<Documents />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/blood-groups" element={<BloodGroups />} />
-              <Route path="/more" element={<More />} />
-              <Route
-                path="*"
-                element={
-                  <div className="space-y-3">
-                    <h1 className="text-2xl font-semibold">Page not found</h1>
-                    <Link className="text-primary" to="/">
-                      Return to contacts
-                    </Link>
-                  </div>
-                }
-              />
-            </Routes>
+            <m.div
+              key={location.pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.18 }}
+            >
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/favorites" element={<Favorites />} />
+                <Route path="/documents" element={<Documents />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/blood-groups" element={<BloodGroups />} />
+                <Route path="/more" element={<More />} />
+                <Route
+                  path="*"
+                  element={
+                    <div className="space-y-3">
+                      <h1 className="text-2xl font-semibold">Page not found</h1>
+                      <Link className="text-primary" to="/">
+                        Return to contacts
+                      </Link>
+                    </div>
+                  }
+                />
+              </Routes>
+            </m.div>
           </Suspense>
         </main>
         {!isHome && (
@@ -255,8 +263,12 @@ function Shell() {
 }
 export default function App() {
   return (
-    <BrowserRouter>
-      <Shell />
-    </BrowserRouter>
+    <MotionConfig reducedMotion="user">
+      <LazyMotion features={domMax}>
+        <BrowserRouter>
+          <Shell />
+        </BrowserRouter>
+      </LazyMotion>
+    </MotionConfig>
   );
 }

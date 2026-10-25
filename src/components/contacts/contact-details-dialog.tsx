@@ -48,7 +48,7 @@ export function ContactDetailsDialog({
   const updated = contact.updatedAt ? new Date(contact.updatedAt) : null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="mobile-sheet max-h-[90dvh] overflow-y-auto sm:max-w-[480px]">
+      <DialogContent mobileSheet className=" sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="text-2xl leading-tight">
             {contact.name}

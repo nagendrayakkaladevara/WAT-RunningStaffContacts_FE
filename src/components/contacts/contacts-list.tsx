@@ -1,3 +1,4 @@
+import { m } from "motion/react";
 import { useState } from "react";
 import { Star, Users, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,76 +64,84 @@ export function ContactsList({
           </p>
         </div>
       )}
-      <div className="border-y">
-        {contacts.map((contact) => (
-          <article key={contact.id} className="contact-row">
-            <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-              <span
-                aria-hidden="true"
-                className="mt-1 flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground"
-              >
-                {contact.name
-                  .trim()
-                  .split(/\s+/)
-                  .slice(0, 2)
-                  .map((part) => part[0])
-                  .join("")}
-              </span>
-              <button
-                className="min-h-11 min-w-0 flex-1 rounded-lg text-left"
-                onClick={() => {
-                  recordViewed(contact.id, contact.phone);
-                  setSelected(contact);
-                }}
-                aria-label={`View ${contact.name}'s details`}
-              >
-                <h3 className="flex items-start gap-2 text-[15px] font-medium leading-relaxed">
-                  <span className="min-w-0 break-words">{contact.name}</span>
-                  <ChevronRight
-                    aria-hidden="true"
-                    className="mt-1 size-4 shrink-0 text-muted-foreground"
+      {contacts.length > 0 && (
+        <div className="border-y">
+          {contacts.map((contact, index) => (
+            <m.article
+              key={contact.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.18, delay: Math.min(index, 5) * 0.025 }}
+              className="contact-row"
+            >
+              <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                <span
+                  aria-hidden="true"
+                  className="mt-1 flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground"
+                >
+                  {contact.name
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((part) => part[0])
+                    .join("")}
+                </span>
+                <button
+                  className="min-h-11 min-w-0 flex-1 rounded-lg text-left"
+                  onClick={() => {
+                    recordViewed(contact.id, contact.phone);
+                    setSelected(contact);
+                  }}
+                  aria-label={`View ${contact.name}'s details`}
+                >
+                  <h3 className="flex items-start gap-2 text-[15px] font-medium leading-relaxed">
+                    <span className="min-w-0 break-words">{contact.name}</span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="mt-1 size-4 shrink-0 text-muted-foreground"
+                    />
+                  </h3>
+                  <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                    {[contact.designation, contact.lobby]
+                      .filter(Boolean)
+                      .join(" · ") || "Contact"}
+                  </p>
+                  <p className="mt-2 text-sm tabular-nums">
+                    {contact.phone || "No phone number"}
+                    {contact.bloodGroup && (
+                      <span className="ml-3 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                        {contact.bloodGroup}
+                      </span>
+                    )}
+                  </p>
+                </button>
+              </div>
+              <div className="flex items-center justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground"
+                  aria-label={`${favorites.includes(contact.id) ? "Remove" : "Add"} ${contact.name} ${favorites.includes(contact.id) ? "from" : "to"} favorites`}
+                  aria-pressed={favorites.includes(contact.id)}
+                  onClick={() => toggleFavorite(contact.id, contact.phone)}
+                >
+                  <Star
+                    className={
+                      favorites.includes(contact.id)
+                        ? "fill-foreground text-foreground"
+                        : ""
+                    }
                   />
-                </h3>
-                <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-                  {[contact.designation, contact.lobby]
-                    .filter(Boolean)
-                    .join(" · ") || "Contact"}
-                </p>
-                <p className="mt-2 text-sm tabular-nums">
-                  {contact.phone || "No phone number"}
-                  {contact.bloodGroup && (
-                    <span className="ml-3 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                      {contact.bloodGroup}
-                    </span>
-                  )}
-                </p>
-              </button>
-            </div>
-            <div className="flex items-center justify-end gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground"
-                aria-label={`${favorites.includes(contact.id) ? "Remove" : "Add"} ${contact.name} ${favorites.includes(contact.id) ? "from" : "to"} favorites`}
-                aria-pressed={favorites.includes(contact.id)}
-                onClick={() => toggleFavorite(contact.id, contact.phone)}
-              >
-                <Star
-                  className={
-                    favorites.includes(contact.id)
-                      ? "fill-foreground text-foreground"
-                      : ""
-                  }
+                </Button>
+                <ContactActions
+                  phone={contact.phone || ""}
+                  contactName={contact.name}
                 />
-              </Button>
-              <ContactActions
-                phone={contact.phone || ""}
-                contactName={contact.name}
-              />
-            </div>
-          </article>
-        ))}
-      </div>
+              </div>
+            </m.article>
+          ))}
+        </div>
+      )}
       <ContactDetailsDialog
         key={selected?.id || "closed"}
         contact={selected}
