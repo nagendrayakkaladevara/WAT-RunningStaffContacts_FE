@@ -2,7 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ContactDetailsDialog } from "./contact-details-dialog";
 import { contactText } from "@/lib/contact-sharing";
-vi.mock("@/lib/contact-card", () => ({
+vi.mock("@/lib/contact-card", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/contact-card")>()),
   createContactCard: async () =>
     new File(["png"], "contact.png", { type: "image/png" }),
   downloadContactCard: vi.fn(),
@@ -72,4 +73,20 @@ describe("Contact image sharing", () => {
     );
     expect(screen.queryByText(/Sharing unavailable/)).not.toBeInTheDocument();
   });
+});
+
+it("copies the displayed phone number and exposes the matching call target", async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal("navigator", { clipboard: { writeText } });
+  render(<ContactDetailsDialog contact={contact} open onOpenChange={() => {}} />);
+  fireEvent.click(screen.getByRole("button", { name: "Copy", exact: true }));
+  await waitFor(() => expect(writeText).toHaveBeenCalledWith(contact.phone));
+  expect(screen.getByRole("link", { name: `Call ${contact.name}` })).toHaveAttribute("href", `tel:${contact.phone}`);
+  expect(await screen.findByText("Number copied.")).toBeInTheDocument();
+});
+
+it("disables phone actions for contacts without a number", () => {
+  render(<ContactDetailsDialog contact={{ id: "missing", name: "No Phone" }} open onOpenChange={() => {}} />);
+  expect(screen.getByRole("button", { name: "Copy", exact: true })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Call", exact: true })).toBeDisabled();
 });

@@ -15,7 +15,6 @@ import type { Document } from "@/types/document";
 
 export function DocumentsList() {
   const [documents, setDocuments] = React.useState<Document[]>([]);
-  const [fileType, setFileType] = React.useState("all");
   const [sort, setSort] = React.useState("title");
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -44,23 +43,9 @@ export function DocumentsList() {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  const typeOf = (link: string) => {
-    try {
-      const path = new URL(link).pathname.toLowerCase();
-      return path.endsWith(".pdf")
-        ? "pdf"
-        : /\.(docx?|xlsx?|pptx?)$/.test(path)
-          ? "office"
-          : "link";
-    } catch {
-      return "link";
-    }
-  };
   const filteredDocuments = documents
-    .filter(
-      (doc) =>
-        doc.title.toLowerCase().includes(searchQuery.trim().toLowerCase()) &&
-        (fileType === "all" || typeOf(doc.link) === fileType),
+    .filter((doc) =>
+      doc.title.toLowerCase().includes(searchQuery.trim().toLowerCase()),
     )
     .sort((a, b) =>
       sort === "title"
@@ -146,22 +131,6 @@ export function DocumentsList() {
       </div>
 
       <div className="flex flex-wrap items-end gap-4">
-        <div className="space-y-2">
-          <label htmlFor="document-type" className="text-sm font-medium">
-            File type
-          </label>
-          <Select value={fileType} onValueChange={setFileType}>
-            <SelectTrigger id="document-type" className="min-w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All documents</SelectItem>
-              <SelectItem value="pdf">PDF</SelectItem>
-              <SelectItem value="office">Office files</SelectItem>
-              <SelectItem value="link">Other links</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
         <div className="space-y-2">
           <label htmlFor="document-sort" className="text-sm font-medium">
             Sort by
